@@ -1,0 +1,23 @@
+@import url("https://fonts.googleapis.com/css2?family=Hanuman:wght@100;300;400;700;900&family=Kantumruy+Pro:ital,wght@0,300..700;1,300..700&family=Inter:wght@300;400;500;600;700&display=swap");
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Kantumruy Pro", "Hanuman", "Inter", sans-serif;
+  
+  --color-wedding-50: #fdf2f8;
+  --color-wedding-100: #fce7f3;
+  --color-wedding-200: #fbcfe8;
+  --color-wedding-300: #f9a8d4;
+  --color-wedding-400: #f472b6;
+  --color-wedding-500: #ec4899;
+  --color-wedding-600: #db2777;
+  --color-wedding-700: #be185d;
+  --color-wedding-900: #831843;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #f8fafc;
+  color: #1e293b;
+}
+
