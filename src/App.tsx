@@ -324,6 +324,38 @@ const formatCurrency = (amount: number, currency: 'USD' | 'KHR') => {
   return `$${amount.toFixed(2)}`;
 };
 
+const ImageUploader = ({ value, onChange, label, optional, placeholder }: { value: string, onChange: (v: string) => void, label: string, optional?: boolean, placeholder?: string }) => {
+  const [dragActive, setDragActive] = useState(false);
+  const handleFile = (file: File) => {
+    if (file && file.type.startsWith('image/')) {
+        const reader = new FileReader();
+        reader.onloadend = () => { onChange(reader.result as string); };
+        reader.readAsDataURL(file);
+    }
+  };
+  return (
+    <div className="space-y-1.5 font-sans">
+       <label className="block text-slate-700 font-semibold mb-1">{label} {optional ? '(ស្រេចចិត្ត)' : '*'}</label>
+       <label style={{ cursor: 'pointer' }} className={`w-full flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-xl transition ${dragActive ? 'border-wedding-500 bg-wedding-50' : 'border-slate-300 bg-slate-50'}`}
+          onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
+          onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
+          onDrop={(e) => { e.preventDefault(); setDragActive(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); }}
+       >
+         {value ? (
+           <img src={value} className="max-h-32 object-contain rounded shadow-sm" alt="QR" />
+         ) : (
+           <div className="text-center text-slate-500">
+             <Camera className="mx-auto w-8 h-8 mb-2 opacity-30 text-rose-500"/>
+             <span className="text-xs font-semibold">{placeholder || 'Upload ឬ Drag រូបភាពបញ្ចូលទីនេះ'}</span>
+           </div>
+         )}
+         <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
+       </label>
+       {value && <div className="text-right mt-1"><button type="button" onClick={(e) => {e.preventDefault(); onChange('')}} className="text-[10px] text-rose-500 hover:text-rose-700 font-bold transition">✕ លុបរូបភាពចេញ</button></div>}
+    </div>
+  );
+};
+
 export default function App() {
   // Connection Mode State
   const initialSupabaseUrl = (import.meta as any).env?.VITE_SUPABASE_URL || '';
@@ -2049,7 +2081,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col bg-[#faf6f6] selection:bg-rose-100 selection:text-wedding-700 antialiased font-sans">
+    <div className="min-h-screen flex flex-col bg-slate-50 selection:bg-rose-100 selection:text-wedding-700 antialiased font-sans">
       <div className="flex-1 flex flex-col print:hidden">
       
       {/* Top Banner indicating Database Sync Status */}
@@ -2169,63 +2201,59 @@ export default function App() {
       )}
 
       {/* Elegant Header Area (Bento Grid Theme) */}
-      <header className="bg-white border-b border-slate-200 flex flex-col md:flex-row items-center justify-between px-6 py-4 md:py-0 md:h-16 shrink-0 shadow-sm gap-4 transition-all">
-        <div className="flex items-center gap-3">
-          <div className="relative shrink-0 flex items-center justify-center w-12 h-12 bg-white rounded-xl border border-slate-100 shadow-xs text-emerald-600">
-            <Users className="w-7 h-7" />
-            {/* Tiny ornament heart badge */}
-            <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-xs border-2 border-white">
-              <Check className="w-2.5 h-2.5 stroke-[3]" />
-            </div>
+      <header className="bg-white border-b border-slate-100 flex flex-col md:flex-row items-center justify-between px-4 md:px-8 py-5 md:py-0 md:h-[72px] shrink-0 shadow-sm gap-4 transition-all sticky top-0 z-40">
+        <div className="flex items-center gap-3.5 w-full md:w-auto">
+          <div className="relative shrink-0 flex items-center justify-center w-[46px] h-[46px] md:w-12 md:h-12 bg-white rounded-2xl border border-slate-100 shadow-[0_4px_14px_0_rgb(0,0,0,0.05)] overflow-hidden">
+            <img src="https://i.ibb.co/4nVwkfZD/Gemini-Generated-Image-uk0xwruk0xwruk0x.png" referrerPolicy="no-referrer" alt="Event Guest Management Logo" className="w-full h-full object-contain" />
           </div>
-          <div className="text-center md:text-left">
-            <h1 className="text-base md:text-lg font-bold text-slate-900 leading-tight">
+          <div className="text-left flex-1 md:flex-none">
+            <h1 className="text-base md:text-lg font-bold text-slate-800 leading-tight">
               ប្រព័ន្ធគ្រប់គ្រងភ្ញៀវចូលរួមកម្មវិធី
             </h1>
-            <p className="text-[9px] md:text-[10px] uppercase tracking-wider text-slate-500 font-semibold italic">
+            <p className="text-[10px] uppercase tracking-[0.05em] text-slate-400 font-semibold italic">
               Event Guest Management System
             </p>
           </div>
         </div>
 
         {/* Core App Role Switchers in a clean Bento styled Navigation Bar */}
-        <nav className="flex bg-slate-100 p-1 rounded-xl relative z-10 shadow-inner">
+        <nav className="flex overflow-x-auto w-full md:w-auto overflow-y-hidden bg-slate-50/80 backdrop-blur-md p-1 md:p-1.5 md:rounded-2xl shadow-inner border border-slate-200/60 no-scrollbar" style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}>
           <button
             onClick={() => handleRoleSwitch('guest')}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 flex items-center space-x-1 cursor-pointer ${
+            className={`px-4 py-2.5 md:py-2 text-[13px] md:text-sm font-bold rounded-xl transition-all duration-300 flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
               currentRole === 'guest'
-                ? 'bg-white text-wedding-600 shadow-sm'
-                : 'text-slate-550 hover:text-slate-800'
+                ? 'bg-white text-rose-600 shadow-[0_2px_10px_rgb(0,0,0,0.06)]'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
             }`}
             id="role-guest-view"
           >
-            <Smartphone className="w-3.5 h-3.5" />
+            <Smartphone className="w-4 h-4" />
             <span>ទំព័រចុះឈ្មោះ (Guest)</span>
           </button>
           
           <button
             onClick={() => handleRoleSwitch('admin')}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 flex items-center space-x-1 cursor-pointer ${
+            className={`px-4 py-2.5 md:py-2 text-[13px] md:text-sm font-bold rounded-xl transition-all duration-300 flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
               currentRole === 'admin'
-                ? 'bg-white text-wedding-600 shadow-sm'
-                : 'text-slate-550 hover:text-slate-800'
+                ? 'bg-white text-rose-600 shadow-[0_2px_10px_rgb(0,0,0,0.06)]'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
             }`}
             id="role-admin-view"
           >
-            <UserCheck className="w-3.5 h-3.5" />
+            <UserCheck className="w-4 h-4" />
             <span>អ្នកសម្របសម្រួល (Admin)</span>
           </button>
           
           <button
             onClick={() => handleRoleSwitch('host')}
-            className={`px-4 py-2 text-xs font-bold rounded-lg transition-all duration-200 flex items-center space-x-1 cursor-pointer ${
+            className={`px-4 py-2.5 md:py-2 text-[13px] md:text-sm font-bold rounded-xl transition-all duration-300 flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
               currentRole === 'host'
-                ? 'bg-white text-wedding-600 shadow-sm'
-                : 'text-slate-550 hover:text-slate-800'
+                ? 'bg-white text-rose-600 shadow-[0_2px_10px_rgb(0,0,0,0.06)]'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
             }`}
             id="role-host-view"
           >
-            <Users className="w-3.5 h-3.5" />
+            <Users className="w-4 h-4" />
             <span>ម្ចាស់កម្មវិធី (Host)</span>
           </button>
         </nav>
@@ -2246,7 +2274,7 @@ export default function App() {
       )}
 
       {/* Main Container Area */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 py-8 relative z-10">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-10 relative z-10">
 
         {/* ========================================================================= */}
         {/* 1. PUBLIC GUEST VIEW */}
@@ -2255,7 +2283,7 @@ export default function App() {
           <div className="max-w-2xl mx-auto">
             
             {/* Wedding selection dropdown */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-6">
+            <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 mb-6">
               <label className="block text-slate-700 font-medium text-sm mb-2 text-center md:text-left">
                 សូមជ្រើសរើសកម្មវិធីដែលអ្នកត្រូវចូលរួម៖
               </label>
@@ -2270,7 +2298,7 @@ export default function App() {
                     setSelectedWeddingId(e.target.value);
                     setRegistrationSuccess(false);
                   }}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 font-semibold focus:ring-2 focus:ring-wedding-500 focus:outline-none transition-all cursor-pointer text-sm"
+                  className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3.5 md:py-3 text-slate-800 font-semibold focus:ring-2 focus:ring-rose-500/20 focus:outline-none transition-all cursor-pointer text-sm"
                   id="sel-wedding-guest-view"
                 >
                   {weddings.map((w) => (
@@ -2282,7 +2310,7 @@ export default function App() {
 
             {registrationSuccess ? (
               /* Success Landing Card */
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 text-center relative overflow-hidden">
+              <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8 text-center relative overflow-hidden">
                 <div className="absolute -top-10 left-1/2 -translate-x-1/2 w-40 h-40 bg-emerald-50 rounded-full flex items-center justify-center -z-10 animate-pulse"></div>
                 <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4 shadow-sm">
                   <Check className="w-8 h-8 stroke-[3]" />
@@ -2362,7 +2390,7 @@ export default function App() {
               </div>
             ) : (
               /* Public Registration Form */
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 relative">
+              <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 relative">
                 <div className="flex items-center space-x-3 border-b border-rose-50 pb-4 mb-6">
                   <div className="p-2.5 bg-rose-50 text-wedding-600 rounded-xl">
                     <Heart className="w-5 h-5 fill-wedding-600" />
@@ -2384,7 +2412,7 @@ export default function App() {
                       placeholder="ឧ. សុខ ម៉ារ៉ា"
                       value={guestName}
                       onChange={(e) => setGuestName(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-wedding-500 focus:bg-white focus:outline-none transition-all"
+                      className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3.5 md:py-3 text-slate-800 text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 focus:bg-white focus:outline-none transition-all"
                       id="inp-guest-name"
                       required
                     />
@@ -2401,7 +2429,7 @@ export default function App() {
                         placeholder="ឧ. 012345678"
                         value={guestPhone}
                         onChange={(e) => setGuestPhone(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-wedding-500 focus:bg-white focus:outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3.5 md:py-3 text-slate-800 text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 focus:bg-white focus:outline-none transition-all"
                         id="inp-guest-phone"
                         required
                       />
@@ -2414,7 +2442,7 @@ export default function App() {
                       <select
                         value={guestRelation}
                         onChange={(e) => setGuestRelation(e.target.value)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-wedding-500 focus:outline-none transition-all cursor-pointer"
+                        className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3.5 md:py-3 text-slate-800 text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 focus:outline-none transition-all cursor-pointer"
                         id="sel-guest-relation"
                       >
                         <option value="ខាងកូនក្រមុំ">ខាងកូនក្រមុំ (Bride Only)</option>
@@ -2437,7 +2465,7 @@ export default function App() {
                         placeholder="ឧ. 0"
                         value={guestCompanions}
                         onChange={(e) => setGuestCompanions(parseInt(e.target.value) || 0)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-wedding-500 focus:bg-white focus:outline-none transition-all"
+                        className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3.5 md:py-3 text-slate-800 text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 focus:bg-white focus:outline-none transition-all"
                         id="inp-guest-companions"
                       />
                     </div>
@@ -2450,7 +2478,7 @@ export default function App() {
                         <select
                           value={guestCurrency}
                           onChange={(e) => setGuestCurrency(e.target.value as 'USD'|'KHR')}
-                          className="bg-slate-50 border border-slate-200 border-r-0 rounded-l-xl px-3 py-2.5 text-slate-700 text-sm focus:ring-2 focus:ring-wedding-500 focus:outline-none transition-all cursor-pointer font-semibold z-10"
+                          className="bg-slate-50 border border-slate-200 border-r-0 rounded-l-2xl px-4 py-3.5 md:py-3 text-slate-700 text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 focus:outline-none transition-all cursor-pointer font-semibold z-10"
                         >
                           <option value="USD">USD ($)</option>
                           <option value="KHR">KHR (៛)</option>
@@ -2460,7 +2488,7 @@ export default function App() {
                           placeholder={guestCurrency === 'USD' ? "ឧ. 50" : "ឧ. 200000"}
                           value={guestAmount}
                           onChange={(e) => setGuestAmount(e.target.value)}
-                          className="w-full bg-slate-50 border border-slate-200 rounded-r-xl px-4 py-2.5 text-slate-800 text-sm focus:ring-2 focus:ring-wedding-500 focus:bg-white focus:outline-none transition-all -ml-[1px]"
+                          className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-r-2xl px-5 py-3.5 md:py-3 text-slate-800 text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 focus:bg-white focus:outline-none transition-all -ml-[1px]"
                           id="inp-guest-amount"
                         />
                       </div>
@@ -2659,7 +2687,7 @@ export default function App() {
                   <button
                     type="submit"
                     disabled={isSubmitting || weddings.length === 0}
-                    className="w-full py-3 px-4 bg-wedding-600 hover:bg-wedding-700 disabled:bg-slate-300 disabled:cursor-not-allowed justify-center items-center gap-1 text-white font-semibold rounded-xl text-sm transition-all duration-150 shadow-md cursor-pointer flex"
+                    className="w-full py-4 px-4 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 disabled:from-slate-300 disabled:to-slate-300 disabled:cursor-not-allowed justify-center items-center gap-2 text-white font-bold rounded-2xl text-base transition-all duration-300 shadow-[0_8px_20px_rgb(244,63,94,0.3)] hover:shadow-[0_8px_25px_rgb(244,63,94,0.4)] disabled:shadow-none cursor-pointer flex active:scale-[0.98]"
                     id="btn-guest-submit"
                   >
                     {isSubmitting ? (
@@ -2687,7 +2715,7 @@ export default function App() {
           <div className="space-y-6">
             {!isAdminLoggedIn ? (
               /* Admin Login Form */
-              <div className="bg-white rounded-2xl border border-rose-100 shadow-md p-6 max-w-md mx-auto">
+              <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 max-w-md mx-auto">
                 <div className="flex flex-col items-center mb-6">
                   <div className="p-3.5 bg-rose-50 text-wedding-600 rounded-full mb-2">
                     <Lock className="w-6 h-6" />
@@ -2725,7 +2753,7 @@ export default function App() {
 
                   <button
                     type="submit"
-                    className="w-full py-2.5 bg-wedding-600 hover:bg-wedding-700 text-white font-semibold rounded-xl text-xs transition-all shadow-sm cursor-pointer"
+                    className="w-full py-3.5 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-bold rounded-xl text-xs md:text-sm transition-all shadow-[0_8px_20px_rgb(244,63,94,0.3)] cursor-pointer active:scale-[0.98]"
                     id="btn-admin-login-submit"
                   >
                     បញ្ចូលគណនីសម្របសម្រួល
@@ -2741,7 +2769,7 @@ export default function App() {
               <div className="space-y-6">
                 
                 {/* Admin Management Toolbar */}
-                <div className="bg-white rounded-2xl border border-rose-100 shadow-xs p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex flex-wrap items-center gap-3">
                     <div>
                       <label className="block text-[11px] text-slate-400 mb-1 uppercase font-semibold">ជ្រើសរើសកម្មវិធីជាក់ស្តែង</label>
@@ -2786,7 +2814,7 @@ export default function App() {
                 </div>
 
                 {/* Main Guest Database Table */}
-                <div className="bg-white rounded-2xl border border-rose-100 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
                   <div className="p-5 border-b border-rose-50 bg-slate-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                       <h2 className="text-sm font-bold text-slate-800">ស្វែងរក និងអនុម័តភ្ញៀវការ ({filteredGuests.length} នាក់)</h2>
@@ -3002,7 +3030,7 @@ export default function App() {
           <div className="space-y-6">
             {!loggedInHostWeddingId ? (
               /* Host Login Card */
-              <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 max-w-md mx-auto">
+              <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 max-w-md mx-auto">
                 <div className="flex flex-col items-center mb-6">
                   <div className="p-3.5 bg-pink-50 text-wedding-600 rounded-full mb-2">
                     <Heart className="w-6 h-6 fill-wedding-600" />
@@ -3040,7 +3068,7 @@ export default function App() {
 
                   <button
                     type="submit"
-                    className="w-full py-2.5 bg-wedding-600 hover:bg-wedding-700 text-white font-semibold rounded-xl text-xs transition duration-150 shadow-sm cursor-pointer"
+                    className="w-full py-3.5 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-bold rounded-xl text-xs md:text-sm transition duration-300 shadow-[0_8px_20px_rgb(244,63,94,0.3)] cursor-pointer active:scale-[0.98]"
                     id="btn-host-login-submit"
                   >
                     ចូលពិនិត្យរបាយការណ៍
@@ -3068,7 +3096,7 @@ export default function App() {
               <div className="space-y-6 animate-fade-in">
                 
                 {/* Host Title & Header */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all">
                   <div>
                     <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-pink-50 text-pink-700 border border-pink-100 uppercase tracking-wider">
                       ម្ចាស់កម្មវិធី (Host)
@@ -3176,7 +3204,7 @@ export default function App() {
                 </div>
 
                 {/* KHQR SETTINGS SECTION FOR HOST */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-4">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 mb-4">
                   <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowKhqrSettings(!showKhqrSettings)}>
                     <div className="flex items-center space-x-3">
                       <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
@@ -3197,25 +3225,19 @@ export default function App() {
                   {showKhqrSettings && (
                     <div className="pt-5 animate-fade-in font-sans border-t border-slate-100 mt-5">
                       <form onSubmit={handleUpdateKhqrSettings} className="space-y-4">
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-slate-700">Link រូបភាព KHQR សម្រាប់ប្រាក់រៀល (KHR) *</label>
-                          <input
-                            type="text"
-                            placeholder="ឧទាហរណ៍៖ https://i.ibb.co/..."
-                            value={editKhqrUrl}
-                            onChange={(e) => setEditKhqrUrl(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-slate-800 text-xs font-mono focus:ring-2 focus:ring-rose-500/20 focus:outline-none transition-all"
-                            required
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
+                          <ImageUploader 
+                            label="រូបភាព KHQR ប្រាក់រៀល (KHR)" 
+                            value={editKhqrUrl} 
+                            onChange={setEditKhqrUrl} 
+                            placeholder="Upload QR រៀល"
                           />
-                        </div>
-                        <div className="space-y-1.5">
-                          <label className="block text-xs font-bold text-slate-700">Link រូបភាព KHQR សម្រាប់ប្រាក់ដុល្លារ (USD) (ស្រេចចិត្ត)</label>
-                          <input
-                            type="text"
-                            placeholder="ឧទាហរណ៍៖ https://i.ibb.co/..."
-                            value={editKhqrUsdUrl}
-                            onChange={(e) => setEditKhqrUsdUrl(e.target.value)}
-                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-slate-800 text-xs font-mono focus:ring-2 focus:ring-rose-500/20 focus:outline-none transition-all"
+                          <ImageUploader 
+                            label="រូបភាព KHQR ប្រាក់ដុល្លារ (USD)" 
+                            value={editKhqrUsdUrl} 
+                            onChange={setEditKhqrUsdUrl} 
+                            optional
+                            placeholder="Upload QR ដុល្លារ"
                           />
                         </div>
                         
@@ -3236,7 +3258,7 @@ export default function App() {
                 </div>
 
                 {/* TELEGRAM NOTIFICATION BOT SETTINGS SECTION */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6">
                   <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowTelegramSettings(!showTelegramSettings)}>
                     <div className="flex items-center space-x-3">
                       <div className="p-2.5 bg-sky-50 text-sky-600 rounded-xl">
@@ -3332,7 +3354,7 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
                 </div>
 
                 {/* READ ONLY Host Guest Ledger with Filter/Search */}
-                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden">
                   <div className="p-5 border-b border-slate-100 bg-slate-55/40 flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                       <h2 className="text-sm font-bold text-slate-900">តារាងបញ្ជីលម្អិតភ្ញៀវដែលត្រូវចូលរួម ({filteredGuests.length} នាក់)</h2>
@@ -3510,7 +3532,7 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
       {/* ADMIN ADD WEDDING EVENT MODAL */}
       {showAddWeddingModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl border border-rose-100 shadow-xl max-w-md w-full overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.12)] max-w-md w-full overflow-hidden">
             <div className="p-5 border-b border-rose-50 bg-slate-50 flex justify-between items-center">
               <h3 className="text-sm font-bold text-slate-800">បង្កើតកម្មវិធីថ្មី</h3>
               <button 
@@ -3559,29 +3581,20 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
                 </div>
               </div>
 
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Link រូបភាព KHQR សម្រាប់ប្រាក់រៀល (KHR) *</label>
-                <input
-                  type="text"
-                  placeholder="ឧ. https://i.ibb.co/... (ត្រូវបញ្ចប់ដោយ .jpg ឬ .png)"
-                  value={newWeddingKhqrUrl}
-                  onChange={(e) => setNewWeddingKhqrUrl(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:ring-1 focus:ring-wedding-500 focus:outline-none transition-all font-mono"
-                  required
+              <div className="grid grid-cols-2 gap-3 pb-2 border-b border-slate-100">
+                <ImageUploader 
+                  label="រូបភាព KHQR ប្រាក់រៀល (KHR)" 
+                  value={newWeddingKhqrUrl} 
+                  onChange={setNewWeddingKhqrUrl} 
+                  placeholder="Upload QR រៀល"
                 />
-                <p className="text-[10px] text-slate-400 mt-0.5">* សម្រាប់លីង QR ទូទាត់ប្រាក់រៀល (ABA Pay, ACLEDA, etc.)</p>
-              </div>
-
-              <div>
-                <label className="block text-slate-700 font-semibold mb-1">Link រូបភាព KHQR សម្រាប់ប្រាក់ដុល្លារ (USD) (ស្រេចចិត្ត)</label>
-                <input
-                  type="text"
-                  placeholder="ឧ. https://i.ibb.co/... (ម៉ាស៊ីននឹងបង្ហាញទាំង២ប្រសិនបើមាន)"
-                  value={newWeddingKhqrUsdUrl}
-                  onChange={(e) => setNewWeddingKhqrUsdUrl(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:ring-1 focus:ring-wedding-500 focus:outline-none transition-all font-mono"
+                <ImageUploader 
+                  label="រូបភាព KHQR ប្រាក់ដុល្លារ (USD)" 
+                  value={newWeddingKhqrUsdUrl} 
+                  onChange={setNewWeddingKhqrUsdUrl} 
+                  optional
+                  placeholder="Upload QR ដុល្លារ"
                 />
-                <p className="text-[11px] text-rose-500 font-medium mt-1.5">* ចំណាំ៖ សូមប្រើប្រាស់ "Direct link" សម្រាប់រូបភាព (បញ្ចប់ដោយ .jpg ឬ .png)</p>
               </div>
 
               <button
@@ -3608,7 +3621,7 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
       {/* ADMIN ADD MANUAL GUEST MODAL */}
       {showAddGuestModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 animate-fade-in">
-          <div className="bg-white rounded-2xl border border-rose-100 shadow-xl max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
+          <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.12)] max-w-md w-full max-h-[90vh] flex flex-col overflow-hidden">
             <div className="p-5 border-b border-rose-50 bg-slate-50 flex justify-between items-center shrink-0">
               <h3 className="text-sm font-bold text-slate-800">ចុះឈ្មោះភ្ញៀវដោយទូទាត់ផ្ទាល់ (Add Pre-Approved Guest)</h3>
               <button 
@@ -3877,179 +3890,9 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
       )}
 
 
-      {/* Supabase Technical Documentation & Copier Section (Collapsible) */}
-      <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 mt-12 py-10 px-4 font-sans text-xs">
-        <div className="max-w-5xl mx-auto space-y-6">
-          <div className="border-b border-slate-800 pb-4 flex justify-between items-start">
-            <div>
-              <h3 className="text-white font-bold text-base flex items-center gap-2">
-                <span>🛠️ របៀបតម្លើង PostgreSQL Database ក្នុង Supabase</span>
-              </h3>
-              <p className="text-slate-400 text-xs mt-1">
-                សូមអនុវត្តតាមការណែនាំខាងក្រោម ដើម្បីដំណើរការ Database និងបញ្ជីអាសយដ្ឋានរដ្ឋបាលកម្ពុជានៅលើគណនី Supabase ផ្ទាល់ខ្លួនរបស់អ្នក។
-              </p>
-            </div>
-            <button
-              onClick={() => setShowSqlDocs(!showSqlDocs)}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
-            >
-              {showSqlDocs ? 'លាក់ការណែនាំ ▴' : 'បង្ហាញការណែនាំ ▾'}
-            </button>
-          </div>
-
-          {showSqlDocs && (
-            <div className="space-y-6 animate-fade-in">
-              {/* Explanation Alert Box for 'Query is too large' Error */}
-              <div className="bg-amber-950/40 border border-amber-900/50 p-4.5 rounded-xl text-amber-200/90 leading-relaxed space-y-2">
-                <h4 className="font-bold text-amber-400 text-xs flex items-center gap-1.5 uppercase tracking-wide">
-              <span>⚠️ របៀបដោះស្រាយបញ្ហា "Query is too large to be run via the SQL Editor" និងកុំឱ្យបាត់បង់ទិន្នន័យចាស់</span>
-            </h4>
-            <div className="space-y-1.5 text-[11px] leading-normal font-sans">
-              <p>
-                <strong>១. សម្រាប់អ្នកមានទិន្នន័យចាស់ស្រាប់៖</strong> ប្រសិនបើលោកអ្នកធ្លាប់មានតារាងទិន្នន័យ និងបញ្ជីភ្ញៀវចាស់ៗនៅក្នុង Supabase រួចហើយ សូមកុំយកកូដផ្នែកទី ១ (សម្រាប់ Web ថ្មី) ទៅដំណើរការឡើយព្រោះវានឹងលុបទិន្នន័យចាស់ចោល! ផ្ទុយទៅវិញ <strong>សូមចុចលើ Tab "ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់)"</strong> ដើម្បីទទួលបានកូដ SQL សុវត្ថិភាពសម្រាប់ការអាប់ដេត (Migration)។
-              </p>
-              <p>
-                <strong>២. មូលហេតុធុងបញ្ហា "Query is too large"៖</strong> ដោយសារតែទិន្នន័យភូមិឃុំស្រុកខ្មែរពេញលេញ (១៤,៣៧២ ភូមិ) មានទំហំធំខ្លាំង (ជាង ១៥,០០០ ជួរ) ពេលលោកអ្នកចម្លងកូដទាំងអស់ទៅដំណើរការតែម្តងគត់ក្នុងផ្ទាំង SQL Editor នោះប្រព័ន្ធ Supabase នឹងបដិសេធ។
-              </p>
-              <p>
-                <strong>៣. ដំណោះស្រាយ៖</strong> ដើម្បីដំណើរការបានជោគជ័យ ១០០% សូមធ្វើការចម្លងកូដទៅដំណើរការក្នុង SQL Editor ម្តងមួយផ្នែកតាមលំដាប់លំដោយដោយប្រើប៊ូតុង Tab ខាងក្រោម។
-              </p>
-            </div>
-          </div>
-
-          {/* Responsive tab bar */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800">
-            <button
-              onClick={() => setSelectedSqlTab('main_schema')}
-              className={`px-2.5 py-2 rounded-lg text-[10px] font-bold text-center transition cursor-pointer ${
-                selectedSqlTab === 'main_schema'
-                  ? 'bg-red-600 text-white shadow'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <div>ផ្នែកទី ១ (ថ្មីស្រឡាង)</div>
-              <div className="text-[9px] mt-0.5 opacity-80 font-normal">លុបចោល បង្កើតថ្មី</div>
-            </button>
-            <button
-              onClick={() => setSelectedSqlTab('safe_migration')}
-              className={`px-2.5 py-2 rounded-lg text-[10px] font-bold text-center transition cursor-pointer ${
-                selectedSqlTab === 'safe_migration'
-                  ? 'bg-emerald-600 text-white shadow'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <div>ផ្នែកទី ១ (រក្សាទិន្នន័យ)</div>
-              <div className="text-[9px] mt-0.5 opacity-80 font-normal">អាប់ដេតស្ងាត់ៗ (Safe)</div>
-            </button>
-            <button
-              onClick={() => setSelectedSqlTab('provinces_districts_communes')}
-              className={`px-2.5 py-2 rounded-lg text-[10px] font-bold text-center transition cursor-pointer ${
-                selectedSqlTab === 'provinces_districts_communes'
-                  ? 'bg-wedding-600 text-white shadow'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <div>ផ្នែកទី ២</div>
-              <div className="text-[9px] mt-0.5 opacity-80 font-normal">ខេត្ត-ក្រុង-ស្រុក-ឃុំ</div>
-            </button>
-            <button
-              onClick={() => setSelectedSqlTab('villages_part1')}
-              className={`px-2.5 py-2 rounded-lg text-[10px] font-bold text-center transition cursor-pointer ${
-                selectedSqlTab === 'villages_part1'
-                  ? 'bg-wedding-600 text-white shadow'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <div>ផ្នែកទី ៣</div>
-              <div className="text-[9px] mt-0.5 opacity-80 font-normal">បញ្ជីភូមិភាគ ១</div>
-            </button>
-            <button
-              onClick={() => setSelectedSqlTab('villages_part2')}
-              className={`px-2.5 py-2 rounded-lg text-[10px] font-bold text-center transition cursor-pointer ${
-                selectedSqlTab === 'villages_part2'
-                  ? 'bg-wedding-600 text-white shadow'
-                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
-              }`}
-            >
-              <div>ផ្នែកទី ៤</div>
-              <div className="text-[9px] mt-0.5 opacity-80 font-normal">បញ្ជីភូមិភាគ ២</div>
-            </button>
-          </div>
-
-          {/* Copy Bar */}
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
-            <div className="text-[11px] text-slate-400 font-sans leading-relaxed">
-              {selectedSqlTab === 'main_schema' && (
-                <span>👉 <strong className="text-red-400">ផ្នែកទី ១ (Core App Schema - ថ្មីស្រឡាង)</strong>: បង្កើតតារាងគ្រប់គ្រងពីដំបូង (លុបចោល និងបង្កើតជាថ្មីសម្រាប់ Web ថ្មីគ្មានទិន្នន័យចាស់)។</span>
-              )}
-              {selectedSqlTab === 'safe_migration' && (
-                <span>👉 <strong className="text-emerald-400">ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់ / Database Upgrade)</strong>: បន្ថែមកូដអាសយដ្ឋានរដ្ឋបាលខ្មែរ និងថែមកូឡឹមថ្មីៗចូលតារាងចាស់ដោយសុវត្ថិភាពខ្ពស់បំផុត មិនបាត់ទិន្នន័យភ្ញៀវទាល់តែសោះ!</span>
-              )}
-              {selectedSqlTab === 'provinces_districts_communes' && (
-                <span>👉 <strong>ផ្នែកទី ២ (Provinces, Districts, Communes)</strong>: បញ្ចូលបញ្ជី ២៥ ខេត្តក្រុង, ១៩៧ ស្រុកខណ្ឌ និង ១,៦៤៦ ឃុំសង្កាត់។</span>
-              )}
-              {selectedSqlTab === 'villages_part1' && (
-                <span>👉 <strong>ផ្នែកទី ៣ (Villages Part 1)</strong>: បញ្ចូលទិន្នន័យភូមិពីខេត្ត ០១ ដល់ ១២ (បន្ទាយមានជ័យ ដល់ រាជធានីភ្នំពេញ)។</span>
-              )}
-              {selectedSqlTab === 'villages_part2' && (
-                <span>👉 <strong>ផ្នែកទី ៤ (Villages Part 2)</strong>: បញ្ចូលទិន្នន័យភូមិពីខេត្ត ១៣ ដល់ ២៥ (ព្រះវិហារ ដល់ ត្បូងឃ្មុំ)។</span>
-              )}
-            </div>
-
-            <button
-              onClick={() => {
-                if (fetchedSqlText) {
-                  let nameLabel = '';
-                  if (selectedSqlTab === 'main_schema') nameLabel = 'ផ្នែកទី ១ (Core Schema)';
-                  else if (selectedSqlTab === 'safe_migration') nameLabel = 'ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់)';
-                  else if (selectedSqlTab === 'provinces_districts_communes') nameLabel = 'ផ្នែកទី ២ (Provinces-Districts-Communes)';
-                  else if (selectedSqlTab === 'villages_part1') nameLabel = 'ផ្នែកទី ៣ (Villages Part 1)';
-                  else if (selectedSqlTab === 'villages_part2') nameLabel = 'ផ្នែកទី ៤ (Villages Part 2)';
-                  
-                  handleCopyText(fetchedSqlText, nameLabel);
-                }
-              }}
-              disabled={isLoadingSql || !fetchedSqlText}
-              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white font-bold rounded-lg flex items-center justify-center space-x-1.5 transition cursor-pointer whitespace-nowrap"
-            >
-              {copiedText && (copiedText.startsWith(`ផ្នែកទី`) || copiedText.includes(`រក្សាទិន្នន័យ`)) ? (
-                <>
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span className="text-emerald-400">បានចម្លងរួចរាល់!</span>
-                </>
-              ) : (
-                <>
-                  <Copy className="w-4 h-4" />
-                  <span>ចម្លងកូដ SQL ផ្នែកនេះ</span>
-                </>
-              )}
-            </button>
-          </div>
-
-          {/* SQL Preview Box */}
-          <div className="bg-slate-950 p-4.5 rounded-xl border border-slate-800 relative min-h-[160px] flex flex-col justify-between">
-            {isLoadingSql ? (
-              <div className="flex flex-col items-center justify-center py-12 space-y-3">
-                <div className="w-8 h-8 border-4 border-wedding-600 border-t-transparent rounded-full animate-spin"></div>
-                <div className="text-xs text-slate-400 animate-pulse font-sans">កំពុងទាញយកទិន្នន័យ SQL ពីម៉ាស៊ីនបម្រើ (Downloading SQL chunk...)</div>
-              </div>
-            ) : (
-              <>
-                <div className="max-h-72 overflow-y-auto overflow-x-auto select-all">
-                  <pre className="text-[10.5px] text-slate-400 font-mono leading-relaxed select-all whitespace-pre">
-                    {fetchedSqlText}
-                  </pre>
-                </div>
-                <div className="text-[9.5px] text-slate-500 font-mono mt-3 text-right">
-                  ជួរទិន្នន័យសរុប៖ {fetchedSqlText ? fetchedSqlText.split('\n').length.toLocaleString() : 0} ជួរ
-                </div>
-              </>
-            )}
-          </div>
-          </div>
-          )}
-
-          <p className="text-center text-slate-500 text-[10px]">
+      <footer className="mt-12 py-6 px-4 font-sans text-xs">
+        <div className="max-w-5xl mx-auto">
+          <p className="text-center text-slate-400 text-[10px]">
             រៀបចំឡើងដោយបច្ចេកវិទ្យា Supabase, Vite, Tailwind CSS, និង React 19 - រក្សាសិទ្ធគ្រប់យ៉ាង © 2026
           </p>
         </div>
