@@ -238,6 +238,81 @@ CREATE POLICY "Enable read/write bypass for prototype districts" ON public.distr
 CREATE POLICY "Enable read/write bypass for prototype communes" ON public.communes FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Enable read/write bypass for prototype villages" ON public.villages FOR ALL USING (true) WITH CHECK (true);`;
 
+const DATABASE_MIGRATION_SQL = `-- =====================================================================
+-- SAFE MIGRATION SCRIPT FOR EXISTING DATABASES (NO DATA LOSS)
+-- =====================================================================
+-- Use this script if you already have existing "guests", "weddings", or "admins" tables
+-- with active data. Running this script WILL NOT delete or drop your existing data.
+
+-- 1. Create Lookup Tables safely if they do not exist
+CREATE TABLE IF NOT EXISTS public.provinces (
+    id VARCHAR(10) PRIMARY KEY,
+    code VARCHAR(10) NOT NULL,
+    name_km VARCHAR(255) NOT NULL,
+    name_en VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.districts (
+    id VARCHAR(10) PRIMARY KEY,
+    province_id VARCHAR(10) REFERENCES public.provinces(id) ON DELETE CASCADE NOT NULL,
+    code VARCHAR(10) NOT NULL,
+    name_km VARCHAR(255) NOT NULL,
+    name_en VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.communes (
+    id VARCHAR(10) PRIMARY KEY,
+    province_id VARCHAR(10) REFERENCES public.provinces(id) ON DELETE CASCADE,
+    district_id VARCHAR(10) REFERENCES public.districts(id) ON DELETE CASCADE NOT NULL,
+    code VARCHAR(10) NOT NULL,
+    name_km VARCHAR(255) NOT NULL,
+    name_en VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS public.villages (
+    id VARCHAR(10) PRIMARY KEY,
+    province_id VARCHAR(10) REFERENCES public.provinces(id) ON DELETE CASCADE,
+    district_id VARCHAR(10) REFERENCES public.districts(id) ON DELETE CASCADE,
+    commune_id VARCHAR(10) REFERENCES public.communes(id) ON DELETE CASCADE NOT NULL,
+    code VARCHAR(10) NOT NULL,
+    name_km VARCHAR(255) NOT NULL,
+    name_en VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 2. Safely add missing columns to 'guests' table if they don't exist yet
+ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS companions INTEGER DEFAULT 0;
+ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending';
+ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS province VARCHAR(255);
+ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS district VARCHAR(255);
+ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS commune VARCHAR(255);
+ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS village VARCHAR(255);
+ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS address_details TEXT;
+ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS is_present BOOLEAN DEFAULT FALSE;
+ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS check_in_time VARCHAR(100);
+
+-- 3. Ensure Row-Level Security (RLS) is enabled on new lookup tables
+ALTER TABLE public.provinces ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.districts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.communes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.villages ENABLE ROW LEVEL SECURITY;
+
+-- 4. Re-create Security Policies safely to avoid duplicate errors
+DROP POLICY IF EXISTS "Enable read/write bypass for prototype provinces" ON public.provinces;
+CREATE POLICY "Enable read/write bypass for prototype provinces" ON public.provinces FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Enable read/write bypass for prototype districts" ON public.districts;
+CREATE POLICY "Enable read/write bypass for prototype districts" ON public.districts FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Enable read/write bypass for prototype communes" ON public.communes;
+CREATE POLICY "Enable read/write bypass for prototype communes" ON public.communes FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Enable read/write bypass for prototype villages" ON public.villages;
+CREATE POLICY "Enable read/write bypass for prototype villages" ON public.villages FOR ALL USING (true) WITH CHECK (true);`;
+
 const formatCurrency = (amount: number, currency: 'USD' | 'KHR') => {
   if (currency === 'KHR') {
     return `${amount.toLocaleString('en-US')} ៛`;
@@ -364,13 +439,17 @@ export default function App() {
   const [dbHasAddressTables, setDbHasAddressTables] = useState(false);
 
   // SQL Tab State & Automatic Fetching for Split SQL Files
-  const [selectedSqlTab, setSelectedSqlTab] = useState<'main_schema' | 'provinces_districts_communes' | 'villages_part1' | 'villages_part2'>('main_schema');
+  const [selectedSqlTab, setSelectedSqlTab] = useState<'main_schema' | 'safe_migration' | 'provinces_districts_communes' | 'villages_part1' | 'villages_part2'>('main_schema');
   const [fetchedSqlText, setFetchedSqlText] = useState<string>('');
   const [isLoadingSql, setIsLoadingSql] = useState(false);
 
   useEffect(() => {
     if (selectedSqlTab === 'main_schema') {
       setFetchedSqlText(DATABASE_BLUEPRINT_SQL);
+      return;
+    }
+    if (selectedSqlTab === 'safe_migration') {
+      setFetchedSqlText(DATABASE_MIGRATION_SQL);
       return;
     }
     
@@ -3581,34 +3660,48 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
           {/* Explanation Alert Box for 'Query is too large' Error */}
           <div className="bg-amber-950/40 border border-amber-900/50 p-4.5 rounded-xl text-amber-200/90 leading-relaxed space-y-2">
             <h4 className="font-bold text-amber-400 text-xs flex items-center gap-1.5 uppercase tracking-wide">
-              <span>⚠️ របៀបដោះស្រាយបញ្ហា "Query is too large to be run via the SQL Editor"</span>
+              <span>⚠️ របៀបដោះស្រាយបញ្ហា "Query is too large to be run via the SQL Editor" និងកុំឱ្យបាត់បង់ទិន្នន័យចាស់</span>
             </h4>
             <div className="space-y-1.5 text-[11px] leading-normal font-sans">
               <p>
-                <strong>មូលហេតុ៖</strong> ដោយសារតែទិន្នន័យភូមិឃុំស្រុកខ្មែរពេញលេញ (១៤,៣៧២ ភូមិ) មានទំហំធំខ្លាំង (ជាង ១៥,០០០ ជួរ) ពេលអ្នកចម្លងកូដទាំងអស់ទៅដំណើរការម្តងគត់ក្នុងផ្ទាំង SQL Editor របស់ Supabase នោះប្រព័ន្ធ Supabase នឹងបដិសេធដោយប្រាប់ថា <strong>"Query is too large"</strong>។
+                <strong>១. សម្រាប់អ្នកមានទិន្នន័យចាស់ស្រាប់៖</strong> ប្រសិនបើលោកអ្នកធ្លាប់មានតារាងទិន្នន័យ និងបញ្ជីភ្ញៀវចាស់ៗនៅក្នុង Supabase រួចហើយ សូមកុំយកកូដផ្នែកទី ១ (សម្រាប់ Web ថ្មី) ទៅដំណើរការឡើយព្រោះវានឹងលុបទិន្នន័យចាស់ចោល! ផ្ទុយទៅវិញ <strong>សូមចុចលើ Tab "ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់)"</strong> ដើម្បីទទួលបានកូដ SQL សុវត្ថិភាពសម្រាប់ការអាប់ដេត (Migration)។
               </p>
               <p>
-                <strong>ដំណោះស្រាយ៖</strong> ដើម្បីដំណើរការបានដោយជោគជ័យ ១០០% សូមធ្វើការចម្លងកូដទៅដំណើរការដាច់ដោយឡែកពីគ្នាជា <strong>៤ ផ្នែកតូចៗ (Sequential Parts)</strong> តាមលំដាប់លំដោយដោយចុចលើ Tab ខាងក្រោម៖
+                <strong>២. មូលហេតុធុងបញ្ហា "Query is too large"៖</strong> ដោយសារតែទិន្នន័យភូមិឃុំស្រុកខ្មែរពេញលេញ (១៤,៣៧២ ភូមិ) មានទំហំធំខ្លាំង (ជាង ១៥,០០០ ជួរ) ពេលលោកអ្នកចម្លងកូដទាំងអស់ទៅដំណើរការតែម្តងគត់ក្នុងផ្ទាំង SQL Editor នោះប្រព័ន្ធ Supabase នឹងបដិសេធ។
+              </p>
+              <p>
+                <strong>៣. ដំណោះស្រាយ៖</strong> ដើម្បីដំណើរការបានជោគជ័យ ១០០% សូមធ្វើការចម្លងកូដទៅដំណើរការក្នុង SQL Editor ម្តងមួយផ្នែកតាមលំដាប់លំដោយដោយប្រើប៊ូតុង Tab ខាងក្រោម។
               </p>
             </div>
           </div>
 
           {/* Responsive tab bar */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800">
+          <div className="grid grid-cols-2 md:grid-cols-5 gap-1.5 p-1 bg-slate-950 rounded-xl border border-slate-800">
             <button
               onClick={() => setSelectedSqlTab('main_schema')}
-              className={`px-3 py-2.5 rounded-lg text-[10.5px] font-bold text-center transition cursor-pointer ${
+              className={`px-2.5 py-2 rounded-lg text-[10px] font-bold text-center transition cursor-pointer ${
                 selectedSqlTab === 'main_schema'
-                  ? 'bg-wedding-600 text-white shadow'
+                  ? 'bg-red-600 text-white shadow'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900'
               }`}
             >
-              <div>ផ្នែកទី ១</div>
-              <div className="text-[9px] mt-0.5 opacity-80 font-normal">តារាងគ្រឹះកម្មវិធី</div>
+              <div>ផ្នែកទី ១ (ថ្មីស្រឡាង)</div>
+              <div className="text-[9px] mt-0.5 opacity-80 font-normal">លុបចោល បង្កើតថ្មី</div>
+            </button>
+            <button
+              onClick={() => setSelectedSqlTab('safe_migration')}
+              className={`px-2.5 py-2 rounded-lg text-[10px] font-bold text-center transition cursor-pointer ${
+                selectedSqlTab === 'safe_migration'
+                  ? 'bg-emerald-600 text-white shadow'
+                  : 'text-slate-400 hover:text-white hover:bg-slate-900'
+              }`}
+            >
+              <div>ផ្នែកទី ១ (រក្សាទិន្នន័យ)</div>
+              <div className="text-[9px] mt-0.5 opacity-80 font-normal">អាប់ដេតស្ងាត់ៗ (Safe)</div>
             </button>
             <button
               onClick={() => setSelectedSqlTab('provinces_districts_communes')}
-              className={`px-3 py-2.5 rounded-lg text-[10.5px] font-bold text-center transition cursor-pointer ${
+              className={`px-2.5 py-2 rounded-lg text-[10px] font-bold text-center transition cursor-pointer ${
                 selectedSqlTab === 'provinces_districts_communes'
                   ? 'bg-wedding-600 text-white shadow'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900'
@@ -3619,7 +3712,7 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
             </button>
             <button
               onClick={() => setSelectedSqlTab('villages_part1')}
-              className={`px-3 py-2.5 rounded-lg text-[10.5px] font-bold text-center transition cursor-pointer ${
+              className={`px-2.5 py-2 rounded-lg text-[10px] font-bold text-center transition cursor-pointer ${
                 selectedSqlTab === 'villages_part1'
                   ? 'bg-wedding-600 text-white shadow'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900'
@@ -3630,7 +3723,7 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
             </button>
             <button
               onClick={() => setSelectedSqlTab('villages_part2')}
-              className={`px-3 py-2.5 rounded-lg text-[10.5px] font-bold text-center transition cursor-pointer ${
+              className={`px-2.5 py-2 rounded-lg text-[10px] font-bold text-center transition cursor-pointer ${
                 selectedSqlTab === 'villages_part2'
                   ? 'bg-wedding-600 text-white shadow'
                   : 'text-slate-400 hover:text-white hover:bg-slate-900'
@@ -3645,7 +3738,10 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-slate-950/60 p-3 rounded-lg border border-slate-800">
             <div className="text-[11px] text-slate-400 font-sans leading-relaxed">
               {selectedSqlTab === 'main_schema' && (
-                <span>👉 <strong>ផ្នែកទី ១ (Core App Schema)</strong>: បង្កើតតារាងគ្រប់គ្រងទិន្នន័យអាពាហ៍ពិពាហ៍ គណនី Admin, និងច្បាប់សុវត្ថិភាព RLS។</span>
+                <span>👉 <strong className="text-red-400">ផ្នែកទី ១ (Core App Schema - ថ្មីស្រឡាង)</strong>: បង្កើតតារាងគ្រប់គ្រងពីដំបូង (លុបចោល និងបង្កើតជាថ្មីសម្រាប់ Web ថ្មីគ្មានទិន្នន័យចាស់)។</span>
+              )}
+              {selectedSqlTab === 'safe_migration' && (
+                <span>👉 <strong className="text-emerald-400">ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់ / Database Upgrade)</strong>: បន្ថែមកូដអាសយដ្ឋានរដ្ឋបាលខ្មែរ និងថែមកូឡឹមថ្មីៗចូលតារាងចាស់ដោយសុវត្ថិភាពខ្ពស់បំផុត មិនបាត់ទិន្នន័យភ្ញៀវទាល់តែសោះ!</span>
               )}
               {selectedSqlTab === 'provinces_districts_communes' && (
                 <span>👉 <strong>ផ្នែកទី ២ (Provinces, Districts, Communes)</strong>: បញ្ចូលបញ្ជី ២៥ ខេត្តក្រុង, ១៩៧ ស្រុកខណ្ឌ និង ១,៦៤៦ ឃុំសង្កាត់។</span>
@@ -3663,6 +3759,7 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
                 if (fetchedSqlText) {
                   let nameLabel = '';
                   if (selectedSqlTab === 'main_schema') nameLabel = 'ផ្នែកទី ១ (Core Schema)';
+                  else if (selectedSqlTab === 'safe_migration') nameLabel = 'ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់)';
                   else if (selectedSqlTab === 'provinces_districts_communes') nameLabel = 'ផ្នែកទី ២ (Provinces-Districts-Communes)';
                   else if (selectedSqlTab === 'villages_part1') nameLabel = 'ផ្នែកទី ៣ (Villages Part 1)';
                   else if (selectedSqlTab === 'villages_part2') nameLabel = 'ផ្នែកទី ៤ (Villages Part 2)';
@@ -3673,7 +3770,7 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
               disabled={isLoadingSql || !fetchedSqlText}
               className="px-4 py-2 bg-slate-800 hover:bg-slate-700 disabled:opacity-50 text-white font-bold rounded-lg flex items-center justify-center space-x-1.5 transition cursor-pointer whitespace-nowrap"
             >
-              {copiedText && copiedText.startsWith(`ផ្នែកទី`) ? (
+              {copiedText && (copiedText.startsWith(`ផ្នែកទី`) || copiedText.includes(`រក្សាទិន្នន័យ`)) ? (
                 <>
                   <Check className="w-4 h-4 text-emerald-400" />
                   <span className="text-emerald-400">បានចម្លងរួចរាល់!</span>
