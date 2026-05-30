@@ -132,6 +132,7 @@ CREATE TABLE public.admins (
 -- 4. Create 'weddings' Table
 CREATE TABLE public.weddings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id),
     title VARCHAR(255) NOT NULL,
     host_username VARCHAR(255) UNIQUE NOT NULL,
     host_password VARCHAR(255) NOT NULL,
@@ -141,6 +142,11 @@ CREATE TABLE public.weddings (
     telegram_chat_id TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+ALTER TABLE public.weddings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read weddings" ON public.weddings FOR SELECT USING (true);
+CREATE POLICY "Users can manage their own weddings" ON public.weddings
+    FOR ALL USING (auth.uid() = user_id);
 
 -- 5. Create 'guests' Table
 CREATE TABLE public.guests (
@@ -163,6 +169,17 @@ CREATE TABLE public.guests (
     check_in_time VARCHAR(100),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+ALTER TABLE public.guests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can insert guests" ON public.guests FOR INSERT WITH CHECK (true);
+CREATE POLICY "Users can manage guests for their weddings" ON public.guests
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.weddings
+            WHERE weddings.id = guests.wedding_id
+            AND weddings.user_id = auth.uid()
+        )
+    );
 
 -- =====================================================================
 -- 6. CREATE CAMBODIA FULL ADDRESS LOOKUP TABLES
@@ -380,6 +397,13 @@ export default function App() {
   const [selectedWeddingId, setSelectedWeddingId] = useState<string>('');
 
   // Authentication states
+  const [saasSession, setSaasSession] = useState<any>(null);
+  const [saasAuthLoading, setSaasAuthLoading] = useState(true);
+  const [authEmail, setAuthEmail] = useState('');
+  const [authPassword, setAuthPassword] = useState('');
+  const [isLoginMode, setIsLoginMode] = useState(true);
+  const [authProcessing, setAuthProcessing] = useState(false);
+
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
@@ -936,11 +960,17 @@ export default function App() {
         // Fetch Data from live Supabase Tables
         const fetchRemoteData = async () => {
           // 1. Fetch Weddings
-          const { data: weddingsData, error: weddingsError } = await client
+          let weddingsQuery = client
             .from('weddings')
             .select('*')
             .limit(10000)
             .order('created_at', { ascending: false });
+          
+          if (saasSession?.user?.id) {
+            weddingsQuery = weddingsQuery.eq('user_id', saasSession.user.id);
+          }
+
+          const { data: weddingsData, error: weddingsError } = await weddingsQuery;
 
           if (weddingsError) {
             throw weddingsError;
@@ -985,6 +1015,87 @@ export default function App() {
       }
     }
   }, [connectionMode, supabaseUrl, supabaseAnonKey]);
+
+  // Session tracking side effect
+  useEffect(() => {
+    if (connectionMode === 'supabase' && supabaseClient) {
+      supabaseClient.auth.getSession().then(({ data: { session } }: any) => {
+        setSaasSession(session);
+        setSaasAuthLoading(false);
+        if (session) setIsAdminLoggedIn(true);
+      });
+
+      const {
+        data: { subscription },
+      } = supabaseClient.auth.onAuthStateChange((_event: any, session: any) => {
+        setSaasSession(session);
+        if (session) setIsAdminLoggedIn(true);
+        else setIsAdminLoggedIn(false);
+      });
+
+      return () => subscription.unsubscribe();
+    } else {
+      setSaasSession(null);
+      setSaasAuthLoading(connectionMode === 'supabase');
+      setIsAdminLoggedIn(false);
+    }
+  }, [connectionMode, supabaseClient]);
+
+  // Refetch data when session changes
+  useEffect(() => {
+    if (connectionMode === 'supabase' && supabaseClient && saasSession) {
+      const fetchData = async () => {
+        const { data: wData } = await supabaseClient.from('weddings').select('*').eq('user_id', saasSession.user.id).order('created_at', { ascending: false });
+        if (wData) setWeddings(wData);
+        
+        // Fetch guests only for those weddings
+        const { data: gData } = await supabaseClient.from('guests').select('*, weddings!inner(user_id)').eq('weddings.user_id', saasSession.user.id).order('created_at', { ascending: false });
+        if (gData) setGuests(gData);
+      };
+      fetchData();
+    }
+  }, [saasSession, connectionMode, supabaseClient]);
+
+  // SaaS Auth Handlers
+  const handleSaaSAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!supabaseClient) return;
+    setAuthProcessing(true);
+    
+    try {
+      if (isLoginMode) {
+        const { error } = await supabaseClient.auth.signInWithPassword({
+          email: authEmail,
+          password: authPassword,
+        });
+        if (error) throw error;
+        showNotification('ចូលប្រព័ន្ធបានជោគជ័យ', 'success');
+      } else {
+        const { error } = await supabaseClient.auth.signUp({
+          email: authEmail,
+          password: authPassword,
+        });
+        if (error) throw error;
+        showNotification('បង្កើតគណនីបានជោគជ័យ សូមចូលប្រព័ន្ធ', 'success');
+        setIsLoginMode(true);
+      }
+    } catch (err: any) {
+      showNotification(err.message || 'ការផ្ទៀងផ្ទាត់មិនជោគជ័យទេ', 'error');
+    } finally {
+      setAuthProcessing(false);
+    }
+  };
+
+  const handleSaaSSignOut = async () => {
+    if (supabaseClient) {
+      await supabaseClient.auth.signOut();
+      showNotification('បានចាកចេញពីប្រព័ន្ធ', 'info');
+    }
+  };
+
+  const handleAuthModeSwitch = () => {
+    setIsLoginMode(!isLoginMode);
+  };
 
   // Sync back to local storage if in demo mode
   const syncLocalData = (newWeddings: Wedding[], newGuests: Guest[]) => {
@@ -1212,9 +1323,10 @@ export default function App() {
 
     try {
       if (connectionMode === 'supabase' && supabaseClient) {
+        const payloadToInsert = saasSession?.user?.id ? { ...newW, user_id: saasSession.user.id } : newW;
         const { data, error } = await supabaseClient
           .from('weddings')
-          .insert([newW])
+          .insert([payloadToInsert])
           .select();
 
         if (error) throw error;
@@ -2256,6 +2368,15 @@ export default function App() {
             <Users className="w-4 h-4" />
             <span>ម្ចាស់កម្មវិធី (Host)</span>
           </button>
+
+          {connectionMode === 'supabase' && saasSession && currentRole !== 'guest' && (
+            <button
+              onClick={handleSaaSSignOut}
+              className="px-4 py-2.5 md:py-2 text-[13px] md:text-sm font-bold rounded-xl transition-all duration-300 flex items-center space-x-1.5 cursor-pointer flex-shrink-0 text-slate-500 hover:text-rose-600 hover:bg-rose-50"
+            >
+              <span>ចាកចេញ (Sign Out)</span>
+            </button>
+          )}
         </nav>
       </header>
 
@@ -2276,9 +2397,70 @@ export default function App() {
       {/* Main Container Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-10 relative z-10">
 
-        {/* ========================================================================= */}
-        {/* 1. PUBLIC GUEST VIEW */}
-        {/* ========================================================================= */}
+        {/* --- SaaS AUTH INTERCEPTOR FOR ORGANIZERS --- */}
+        {connectionMode === 'supabase' && saasAuthLoading && currentRole !== 'guest' ? (
+          <div className="flex flex-col items-center justify-center p-20">
+            <div className="w-10 h-10 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="mt-4 text-slate-500 font-medium">កំពុងផ្ទៀងផ្ទាត់គណនី...</p>
+          </div>
+        ) : connectionMode === 'supabase' && !saasSession && currentRole !== 'guest' ? (
+          <div className="max-w-md mx-auto mt-6 bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8">
+            <div className="text-center mb-8">
+              <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <Database className="w-8 h-8" />
+              </div>
+              <h2 className="text-xl font-bold text-slate-800">{isLoginMode ? 'ចូលប្រើប្រាស់ប្រព័ន្ធគ្រប់គ្រង' : 'ចុះឈ្មោះម្ចាស់កម្មវិធីថ្មី (SaaS)'}</h2>
+              <p className="text-xs text-slate-500 mt-2">សូមចូលគណនីរបស់អ្នកដើម្បីគ្រប់គ្រងទិន្នន័យពិធីរបស់អ្នក</p>
+            </div>
+            
+            <form onSubmit={handleSaaSAuth} className="space-y-4">
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">អ៊ីមែល (Email)</label>
+                <input
+                  type="email"
+                  required
+                  value={authEmail}
+                  onChange={(e) => setAuthEmail(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  placeholder="name@example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">ពាក្យសម្ងាត់ (Password)</label>
+                <input
+                  type="password"
+                  required
+                  value={authPassword}
+                  onChange={(e) => setAuthPassword(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                  placeholder="••••••••"
+                />
+              </div>
+              
+              <button
+                type="submit"
+                disabled={authProcessing}
+                className="w-full bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl py-3.5 mt-2 transition disabled:opacity-50"
+              >
+                {authProcessing ? 'កំពុងដំណើរការ...' : isLoginMode ? 'ចូលប្រព័ន្ធ (Login)' : 'បង្កើតគណនី (Sign Up)'}
+              </button>
+            </form>
+            
+            <div className="mt-6 text-center">
+              <button
+                type="button"
+                onClick={handleAuthModeSwitch}
+                className="text-sm text-rose-600 font-bold hover:underline"
+              >
+                {isLoginMode ? 'មិនទាន់មានគណនី? ចុះឈ្មោះឥឡូវនេះ' : 'មានគណនីរួចហើយ? ចូលប្រព័ន្ធ'}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* ========================================================================= */}
+            {/* 1. PUBLIC GUEST VIEW */}
+            {/* ========================================================================= */}
         {currentRole === 'guest' && (
           <div className="max-w-2xl mx-auto">
             
@@ -3521,6 +3703,8 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
               </div>
             )}
           </div>
+        )}
+          </>
         )}
 
       </main>
