@@ -1,6 +1,6 @@
 {
-  "name": "Wedding Guest Manager",
+  "name": "ប្រព័ន្ធគ្រប់គ្រងភ្ញៀវចូលរួមកម្មវិធី",
   "description": "A responsive Khmer language web application for managing and registering wedding guests with Guest, Admin, and Host roles, integrated with Supabase.",
-  "requestFramePermissions": [],
+  "requestFramePermissions": ["camera"],
   "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
 }
