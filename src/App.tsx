@@ -48,6 +48,7 @@ interface Wedding {
   host_username: string;
   host_password?: string;
   khqr_img_url: string;
+  khqr_usd_img_url?: string;
   telegram_token?: string;
   telegram_chat_id?: string;
   created_at?: string;
@@ -135,6 +136,7 @@ CREATE TABLE public.weddings (
     host_username VARCHAR(255) UNIQUE NOT NULL,
     host_password VARCHAR(255) NOT NULL,
     khqr_img_url TEXT NOT NULL,
+    khqr_usd_img_url TEXT,
     telegram_token TEXT,
     telegram_chat_id TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
@@ -283,7 +285,9 @@ CREATE TABLE IF NOT EXISTS public.villages (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- 2. Safely add missing columns to 'guests' table if they don't exist yet
+-- 2. Safely add missing columns to 'guests' and 'weddings' tables if they don't exist yet
+ALTER TABLE public.weddings ADD COLUMN IF NOT EXISTS khqr_usd_img_url TEXT;
+
 ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS companions INTEGER DEFAULT 0;
 ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending';
 ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS province VARCHAR(255);
@@ -374,6 +378,7 @@ export default function App() {
   const [newWeddingHostUser, setNewWeddingHostUser] = useState('');
   const [newWeddingHostPass, setNewWeddingHostPass] = useState('');
   const [newWeddingKhqrUrl, setNewWeddingKhqrUrl] = useState('');
+  const [newWeddingKhqrUsdUrl, setNewWeddingKhqrUsdUrl] = useState('');
   const [showAddWeddingModal, setShowAddWeddingModal] = useState(false);
 
   // New Guest Form state (Admin manual add)
@@ -1147,7 +1152,8 @@ export default function App() {
       title: newWeddingTitle.trim(),
       host_username: newWeddingHostUser.trim(),
       host_password: newWeddingHostPass.trim(),
-      khqr_img_url: newWeddingKhqrUrl.trim()
+      khqr_img_url: newWeddingKhqrUrl.trim(),
+      khqr_usd_img_url: newWeddingKhqrUsdUrl.trim() || undefined
     };
 
     try {
@@ -1204,6 +1210,7 @@ export default function App() {
       setNewWeddingHostUser('');
       setNewWeddingHostPass('');
       setNewWeddingKhqrUrl('');
+      setNewWeddingKhqrUsdUrl('');
       setShowAddWeddingModal(false);
     } catch (err: any) {
       console.error(err);
@@ -2164,28 +2171,51 @@ export default function App() {
                   </div>
                 )}
 
-                {activeWedding?.khqr_img_url && (
+                {(activeWedding?.khqr_img_url || activeWedding?.khqr_usd_img_url) && (
                   <div className="mt-6 border-t border-slate-100 pt-6">
-                    <p className="text-slate-600 text-sm font-semibold mb-3 flex items-center justify-center gap-1">
+                    <p className="text-slate-600 text-sm font-semibold mb-4 flex items-center justify-center gap-1">
                       <Heart className="w-4 h-4 fill-rose-500 stroke-rose-500" />
                       អ្នកក៏អាចធ្វើការចងដៃជាប្រាក់ឌីជីថលតាម KHQR ខាងក្រោមនេះ៖
                     </p>
                     
-                    <div className="max-w-xs mx-auto bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-inner relative group">
-                      <img 
-                        src={activeWedding.khqr_img_url} 
-                        alt="Wedding KHQR Code" 
-                        className="w-full h-auto object-contain rounded-xl"
-                        onError={(e)=>{
-                          const target = e.target as HTMLImageElement;
-                          if (!target.src.includes('placehold.co')) {
-                            target.src = "https://placehold.co/400x500?text=Invalid+QR+Image+URL\\nPlease+use+Direct+Link+(.jpg/.png)";
-                          }
-                        }}
-                      />
-                      <div className="text-[11px] text-slate-500 mt-2 text-center italic font-mono">
-                        ការស្កេនទូទាត់ប្រាក់ចងដៃពីចម្ងាយ
-                      </div>
+                    <div className="flex flex-col sm:flex-row gap-4 items-center justify-center">
+                      {activeWedding?.khqr_img_url && (
+                        <div className="max-w-xs bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-inner relative group w-full">
+                          <img 
+                            src={activeWedding.khqr_img_url} 
+                            alt="Wedding KHQR Code KHR" 
+                            className="w-full h-auto object-contain rounded-xl"
+                            onError={(e)=>{
+                              const target = e.target as HTMLImageElement;
+                              if (!target.src.includes('placehold.co')) {
+                                target.src = "https://placehold.co/400x500?text=Invalid+QR+Image+URL\\nPlease+use+Direct+Link+(.jpg/.png)";
+                              }
+                            }}
+                          />
+                          <div className="text-[11px] text-slate-700 mt-3 text-center font-bold bg-slate-200/60 py-1.5 rounded-lg border border-slate-200">
+                            គណនីប្រាក់រៀល (KHR)
+                          </div>
+                        </div>
+                      )}
+
+                      {activeWedding?.khqr_usd_img_url && (
+                        <div className="max-w-xs bg-slate-50 border border-slate-200 p-4 rounded-2xl shadow-inner relative group w-full">
+                          <img 
+                            src={activeWedding.khqr_usd_img_url} 
+                            alt="Wedding KHQR Code USD" 
+                            className="w-full h-auto object-contain rounded-xl"
+                            onError={(e)=>{
+                              const target = e.target as HTMLImageElement;
+                              if (!target.src.includes('placehold.co')) {
+                                target.src = "https://placehold.co/400x500?text=Invalid+QR+Image+URL\\nPlease+use+Direct+Link+(.jpg/.png)";
+                              }
+                            }}
+                          />
+                          <div className="text-[11px] text-slate-700 mt-3 text-center font-bold bg-slate-200/60 py-1.5 rounded-lg border border-slate-200">
+                            គណនីប្រាក់ដុល្លារ (USD)
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
@@ -3339,7 +3369,7 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
               </div>
 
               <div>
-                <label className="block text-slate-700 font-semibold mb-1">Link រូបភាព KHQR (Direct Image URL)</label>
+                <label className="block text-slate-700 font-semibold mb-1">Link រូបភាព KHQR សម្រាប់ប្រាក់រៀល (KHR) *</label>
                 <input
                   type="text"
                   placeholder="ឧ. https://i.ibb.co/... (ត្រូវបញ្ចប់ដោយ .jpg ឬ .png)"
@@ -3348,8 +3378,19 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:ring-1 focus:ring-wedding-500 focus:outline-none transition-all font-mono"
                   required
                 />
-                <p className="text-[11px] text-rose-500 font-medium mt-1.5">* ចំណាំ៖ សូមចម្លងយក "Direct link" (លីងផ្ទាល់) ដែលបញ្ចប់ដោយ .jpg ឬ .png</p>
-                <p className="text-[10px] text-slate-400 mt-0.5">* សម្រាប់លីង QR ទូទាត់ប្រាក់ចងដៃពីចម្ងាយ (ABA Pay, ACLEDA, etc.)</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">* សម្រាប់លីង QR ទូទាត់ប្រាក់រៀល (ABA Pay, ACLEDA, etc.)</p>
+              </div>
+
+              <div>
+                <label className="block text-slate-700 font-semibold mb-1">Link រូបភាព KHQR សម្រាប់ប្រាក់ដុល្លារ (USD) (ស្រេចចិត្ត)</label>
+                <input
+                  type="text"
+                  placeholder="ឧ. https://i.ibb.co/... (ម៉ាស៊ីននឹងបង្ហាញទាំង២ប្រសិនបើមាន)"
+                  value={newWeddingKhqrUsdUrl}
+                  onChange={(e) => setNewWeddingKhqrUsdUrl(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 focus:ring-1 focus:ring-wedding-500 focus:outline-none transition-all font-mono"
+                />
+                <p className="text-[11px] text-rose-500 font-medium mt-1.5">* ចំណាំ៖ សូមប្រើប្រាស់ "Direct link" សម្រាប់រូបភាព (បញ្ចប់ដោយ .jpg ឬ .png)</p>
               </div>
 
               <button
