@@ -408,6 +408,14 @@ export default function App() {
   const [telegramChatId, setTelegramChatId] = useState('');
   const [isSavingTelegram, setIsSavingTelegram] = useState(false);
   const [showTelegramSettings, setShowTelegramSettings] = useState(false);
+  const [showSupabaseSettings, setShowSupabaseSettings] = useState(false);
+  const [showSqlDocs, setShowSqlDocs] = useState(false);
+
+  // KHQR Edit states
+  const [editKhqrUrl, setEditKhqrUrl] = useState('');
+  const [editKhqrUsdUrl, setEditKhqrUsdUrl] = useState('');
+  const [isSavingKhqr, setIsSavingKhqr] = useState(false);
+  const [showKhqrSettings, setShowKhqrSettings] = useState(false);
 
   // Address States (Guest Form)
   const [selectedProvinceId, setSelectedProvinceId] = useState('');
@@ -845,9 +853,9 @@ export default function App() {
 
   // Load from Supabase URL configuration if available in env
   useEffect(() => {
-    // Try to load from window.env
-    const url = (window as any).env?.SUPABASE_URL || (import.meta as any).env?.VITE_SUPABASE_URL || '';
-    const key = (window as any).env?.SUPABASE_ANON_KEY || (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || '';
+    // Try to load from window.env, then vite env, then localStorage
+    const url = (window as any).env?.SUPABASE_URL || (import.meta as any).env?.VITE_SUPABASE_URL || localStorage.getItem('wedding_manager_supabase_url') || '';
+    const key = (window as any).env?.SUPABASE_ANON_KEY || (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || localStorage.getItem('wedding_manager_supabase_key') || '';
     
     if (url && key) {
       setSupabaseUrl(url);
@@ -958,7 +966,7 @@ export default function App() {
     setNotification({ message: msg, type });
     setTimeout(() => {
       setNotification(null);
-    }, 4000);
+    }, 6500);
   };
 
   // Switch role action helper
@@ -1001,7 +1009,8 @@ export default function App() {
     setIsSubmitting(true);
     const floatAmount = parseFloat(guestAmount) || 0.00;
 
-    const newGuest: Omit<Guest, 'id'> = {
+    const newGuest: Guest = {
+      id: crypto.randomUUID(),
       wedding_id: selectedWeddingId,
       name: guestName.trim(),
       phone: guestPhone.trim(),
@@ -1102,8 +1111,17 @@ export default function App() {
       setGuestVillage('');
       setGuestAddressDetails('');
     } catch (err: any) {
-      console.error(err);
-      showNotification(`ការចុះឈ្មោះបរាជ័យ៖ ${err.message || err}`, 'error');
+      console.error("Guest insert error:", err);
+      alert(`Error detail: ${err.message || err.toString()}`);
+      if (err.message && err.message.includes("violates row-level security policy")) {
+        showNotification(`បរាជ័យ៖ សូមបង្កើត RLS Policies ដោយដំណើរការកូដ "ផ្នែកទី ១" នៅក្នុង Supabase សិន`, 'error');
+      } else if (err.message && err.message.includes("column")) {
+        showNotification(`បរាជ័យ៖ Database របស់អ្នកចាស់ពេក! សូមដំណើរការកូដ "ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់)" ក្នុង Supabase សិន។`, 'error');
+      } else if (err.message && err.message.includes("id")) {
+        showNotification(`បរាជ័យ៖ តារាង guests របស់អ្នកមិនមាន default uuid សំរាប់បញ្ជូល id ទេ។ សូមកែតម្រូវក្នុង Supabase`, 'error');
+      } else {
+        showNotification(`ការចុះឈ្មោះបរាជ័យ៖ ${err.message || err}`, 'error');
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -1148,13 +1166,17 @@ export default function App() {
       return;
     }
 
-    const newW: Omit<Wedding, 'id'> = {
+    const newW: any = {
+      id: crypto.randomUUID(),
       title: newWeddingTitle.trim(),
       host_username: newWeddingHostUser.trim(),
       host_password: newWeddingHostPass.trim(),
-      khqr_img_url: newWeddingKhqrUrl.trim(),
-      khqr_usd_img_url: newWeddingKhqrUsdUrl.trim() || undefined
+      khqr_img_url: newWeddingKhqrUrl.trim()
     };
+
+    if (newWeddingKhqrUsdUrl.trim()) {
+      newW.khqr_usd_img_url = newWeddingKhqrUsdUrl.trim();
+    }
 
     try {
       if (connectionMode === 'supabase' && supabaseClient) {
@@ -1213,8 +1235,19 @@ export default function App() {
       setNewWeddingKhqrUsdUrl('');
       setShowAddWeddingModal(false);
     } catch (err: any) {
-      console.error(err);
-      showNotification(`ការបង្កើតបរាជ័យ៖ ${err.message || err}`, 'error');
+      console.error("Wedding insert error:", err);
+      alert(`Error detail: ${err.message || err.toString()}`);
+      if (err.message && err.message.includes("violates row-level security policy")) {
+        showNotification(`បរាជ័យ (RLS Policy)៖ សូមដំណើរការកូដ "ផ្នែកទី ១" នៅក្នុង Supabase សិនទើបអាចបង្កើតបាន`, 'error');
+      } else if (err.message && err.message.includes("khqr_usd_img_url")) {
+        showNotification(`សូមដំណើរការកូដ "ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់)" ក្នុង Supabase សិន ដើម្បីអាចទាក់ទង QR ដុល្លារបាន!`, 'error');
+      } else if (err.message && err.message.includes("column")) {
+        showNotification(`បរាជ័យ៖ Database របស់អ្នកចាស់ពេក! សូមដំណើរការកូដ "ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់)" ក្នុង Supabase សិន។`, 'error');
+      } else if (err.message && err.message.includes("id")) {
+        showNotification(`បរាជ័យ៖ តារាង weddings របស់អ្នកមិនមាន default gen_random_uuid() ទេ។ សូមដំណើរការផ្នែកទី១ឡើងវិញ`, 'error');
+      } else {
+        showNotification(`ការបង្កើតបរាជ័យ៖ ${err.message || err}`, 'error');
+      }
     }
   };
 
@@ -1232,7 +1265,8 @@ export default function App() {
 
     const floatAmt = parseFloat(manualGuestAmount) || 0;
 
-    const newG: Omit<Guest, 'id'> = {
+    const newG: Guest = {
+      id: crypto.randomUUID(),
       wedding_id: selectedWeddingId,
       name: manualGuestName.trim(),
       phone: manualGuestPhone.trim(),
@@ -1294,8 +1328,17 @@ export default function App() {
       setManualGuestAddressDetails('');
       setShowAddGuestModal(false);
     } catch (err: any) {
-      console.error(err);
-      showNotification(`ការបញ្ចូលភ្ញៀវបរាជ័យ៖ ${err.message || err}`, 'error');
+      console.error("Manual guest insert error:", err);
+      alert(`Error detail: ${err.message || err.toString()}`);
+      if (err.message && err.message.includes("violates row-level security policy")) {
+        showNotification(`បរាជ័យ (RLS Policy)៖ សូមដំណើរការកូដ "ផ្នែកទី ១" នៅក្នុង Supabase សិនទើបអាចបញ្ចូលបាន`, 'error');
+      } else if (err.message && err.message.includes("column")) {
+        showNotification(`បរាជ័យ៖ Database របស់អ្នកចាស់ពេក! សូមដំណើរការកូដ "ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់)" ក្នុង Supabase សិន។`, 'error');
+      } else if (err.message && err.message.includes("id")) {
+        showNotification(`បរាជ័យ៖ តារាង guests របស់អ្នកមិនមាន default uuid សំរាប់បញ្ជូល id ទេ។ សូមកែតម្រូវក្នុង Supabase`, 'error');
+      } else {
+        showNotification(`ការបញ្ចូលភ្ញៀវបរាជ័យ៖ ${err.message || err}`, 'error');
+      }
     }
   };
 
@@ -1631,17 +1674,22 @@ export default function App() {
     }
   };
 
-  // LOAD TELEGRAM SETTINGS FOR ACTIVE WEDDING
+  // LOAD TELEGRAM & KHQR SETTINGS FOR ACTIVE WEDDING
   useEffect(() => {
     const activeWId = loggedInHostWeddingId || selectedWeddingId;
     if (!activeWId) {
       setTelegramToken('');
       setTelegramChatId('');
+      setEditKhqrUrl('');
+      setEditKhqrUsdUrl('');
       return;
     }
 
     const currentW = weddings.find(w => w.id === activeWId);
     if (currentW) {
+      setEditKhqrUrl(currentW.khqr_img_url || '');
+      setEditKhqrUsdUrl(currentW.khqr_usd_img_url || '');
+
       if (currentW.telegram_token || currentW.telegram_chat_id) {
         setTelegramToken(currentW.telegram_token || '');
         setTelegramChatId(currentW.telegram_chat_id || '');
@@ -1710,6 +1758,75 @@ export default function App() {
 
     if (token && chatId) {
       await sendTelegramNotification(token, chatId, messageHtml);
+    }
+  };
+
+  // UPDATE KHQR SETTINGS
+  const handleUpdateKhqrSettings = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const activeWId = loggedInHostWeddingId || selectedWeddingId;
+    if (!activeWId) {
+      showNotification('សូមជ្រើសរើសកម្មវិធីជាមុនសិន!', 'error');
+      return;
+    }
+
+    if (!editKhqrUrl.trim()) {
+      showNotification('សូមបំពេញ URL សម្រាប់ KHQR ប្រាក់រៀល!', 'error');
+      return;
+    }
+
+    setIsSavingKhqr(true);
+    const khrVal = editKhqrUrl.trim();
+    const usdVal = editKhqrUsdUrl.trim() || undefined;
+
+    // Update in local state
+    const updatedWeddings = weddings.map(w => {
+      if (w.id === activeWId) {
+        return {
+          ...w,
+          khqr_img_url: khrVal,
+          khqr_usd_img_url: usdVal
+        };
+      }
+      return w;
+    });
+    setWeddings(updatedWeddings);
+    syncLocalData(updatedWeddings, guests);
+
+    try {
+      if (connectionMode === 'supabase' && supabaseClient) {
+        const updatePayload: any = { khqr_img_url: khrVal };
+        if (usdVal) updatePayload.khqr_usd_img_url = usdVal;
+        // if user clears USD url, we can null it out if we want, but let's assume they want it empty
+        else updatePayload.khqr_usd_img_url = null;
+
+        const { error } = await supabaseClient
+          .from('weddings')
+          .update(updatePayload)
+          .eq('id', activeWId);
+
+        if (error) {
+          console.warn("Could not update Supabase KHQR columns:", error);
+          if (error.message && error.message.includes("khqr_usd_img_url")) {
+            showNotification('សូមដំណើរការកូដ "ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់)" ក្នុង Supabase សិន ដើម្បីអាចទាក់ទង QR ដុល្លារបាន!', 'error');
+          } else {
+            showNotification('មិនអាចរក្សាទុកទៅក្នុង Supabase បានទេ!', 'error');
+          }
+        } else {
+          showNotification('បានកែប្រែ KHQR ក្នុង Database រួចរាល់!', 'success');
+        }
+      } else {
+        showNotification('បានកែប្រែ KHQR រួចរាល់ក្នុង Local Mode!', 'success');
+      }
+    } catch (err: any) {
+      console.warn(err);
+      if (err.message && err.message.includes("khqr_usd_img_url")) {
+          showNotification('សូមដំណើរការកូដ "ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់)" ក្នុង Supabase សិន ដើម្បីអាចទាក់ទង QR ដុល្លារបាន!', 'error');
+      } else {
+          showNotification('មានបញ្ហាក្នុងការរក្សាទុក KHQR', 'error');
+      }
+    } finally {
+      setIsSavingKhqr(false);
     }
   };
 
@@ -1973,66 +2090,80 @@ export default function App() {
       {connectionMode === 'supabase' && (
         <div className="bg-slate-800 border-b border-slate-700 text-slate-100 p-4 transition-all">
           <div className="max-w-5xl mx-auto">
-            <div className="flex items-center space-x-2 text-emerald-400 font-semibold mb-2">
-              <Database className="w-4 h-4" />
-              <h3 className="text-sm">ការកំណត់ទំនាក់ទំនងមូលដ្ឋានទិន្នន័យ Supabase</h3>
+            <div 
+              className="flex items-center justify-between cursor-pointer"
+              onClick={() => setShowSupabaseSettings(!showSupabaseSettings)}
+            >
+              <div className="flex items-center space-x-2 text-emerald-400 font-semibold mb-2 mt-1">
+                <Database className="w-4 h-4" />
+                <h3 className="text-sm">ការកំណត់ទំនាក់ទំនងមូលដ្ឋានទិន្នន័យ Supabase</h3>
+              </div>
+              <span className="p-1 px-3 bg-slate-700 hover:bg-slate-600 text-slate-300 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
+                {showSupabaseSettings ? 'លាក់ការកំណត់ ▴' : 'បង្ហាញការកំណត់ ▾'}
+              </span>
             </div>
             
-            <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
-              <div className="md:col-span-5">
-                <label className="block text-xs text-slate-400 mb-1 font-mono">SUPABASE_URL</label>
-                <input 
-                  type="text" 
-                  placeholder="https://your-project.supabase.co" 
-                  value={supabaseUrl}
-                  onChange={(e) => setSupabaseUrl(e.target.value.replace(/\/rest\/v1\/?$/, ''))}
-                  className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
-                  id="inp-supabase-url"
-                />
-              </div>
-              <div className="md:col-span-5">
-                <label className="block text-xs text-slate-400 mb-1 font-mono">SUPABASE_ANON_KEY</label>
-                <input 
-                  type="password" 
-                  placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
-                  value={supabaseAnonKey}
-                  onChange={(e) => setSupabaseAnonKey(e.target.value)}
-                  className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
-                  id="inp-supabase-key"
-                />
-              </div>
-              <div className="md:col-span-2">
-                <button 
-                  onClick={() => {
-                    if (!supabaseUrl || !supabaseAnonKey) {
-                      showNotification('សូមបំពេញ URL និង Key រួចរាល់!', 'error');
-                      return;
-                    }
-                    setConnectionMode('supabase');
-                    // Force re-trigger of DB init
-                    const u = supabaseUrl;
-                    setSupabaseUrl('');
-                    setTimeout(() => setSupabaseUrl(u), 10);
-                  }}
-                  disabled={isInitializingDb}
-                  className="w-full text-center bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-slate-950 font-semibold rounded px-4 py-1.5 text-xs transition duration-150 cursor-pointer disabled:opacity-50"
-                  id="btn-supabase-connect"
-                >
-                  {isInitializingDb ? 'កំពុងភ្ជាប់...' : 'បញ្ជាក់តភ្ជាប់'}
-                </button>
-              </div>
-            </div>
+            {showSupabaseSettings && (
+              <div className="animate-fade-in mt-2 border-t border-slate-700 pt-3">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-end">
+                  <div className="md:col-span-5">
+                    <label className="block text-xs text-slate-400 mb-1 font-mono">SUPABASE_URL</label>
+                    <input 
+                      type="text" 
+                      placeholder="https://your-project.supabase.co" 
+                      value={supabaseUrl}
+                      onChange={(e) => setSupabaseUrl(e.target.value.replace(/\/rest\/v1\/?$/, ''))}
+                      className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+                      id="inp-supabase-url"
+                    />
+                  </div>
+                  <div className="md:col-span-5">
+                    <label className="block text-xs text-slate-400 mb-1 font-mono">SUPABASE_ANON_KEY</label>
+                    <input 
+                      type="password" 
+                      placeholder="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." 
+                      value={supabaseAnonKey}
+                      onChange={(e) => setSupabaseAnonKey(e.target.value)}
+                      className="w-full bg-slate-900 border border-slate-700 rounded px-3 py-1.5 text-xs text-white focus:outline-none focus:border-emerald-500 font-mono"
+                      id="inp-supabase-key"
+                    />
+                  </div>
+                  <div className="md:col-span-2">
+                    <button 
+                      onClick={() => {
+                        if (!supabaseUrl || !supabaseAnonKey) {
+                          showNotification('សូមបំពេញ URL និង Key រួចរាល់!', 'error');
+                          return;
+                        }
+                        setConnectionMode('supabase');
+                        localStorage.setItem('wedding_manager_supabase_url', supabaseUrl);
+                        localStorage.setItem('wedding_manager_supabase_key', supabaseAnonKey);
+                        // Force re-trigger of DB init
+                        const u = supabaseUrl;
+                        setSupabaseUrl('');
+                        setTimeout(() => setSupabaseUrl(u), 10);
+                      }}
+                      disabled={isInitializingDb}
+                      className="w-full text-center bg-emerald-500 hover:bg-emerald-600 active:bg-emerald-700 text-slate-950 font-semibold rounded px-4 py-1.5 text-xs transition duration-150 cursor-pointer disabled:opacity-50"
+                      id="btn-supabase-connect"
+                    >
+                      {isInitializingDb ? 'កំពុងភ្ជាប់...' : 'បញ្ជាក់តភ្ជាប់'}
+                    </button>
+                  </div>
+                </div>
 
-            {dbErrorMessage && (
-              <div className="mt-3 text-xs bg-red-900/40 border border-red-700 text-red-200 p-2.5 rounded flex items-start space-x-2">
-                <Info className="w-4 h-4 shrink-0 mt-0.5" />
-                <span>{dbErrorMessage}</span>
+                {dbErrorMessage && (
+                  <div className="mt-3 text-xs bg-red-900/40 border border-red-700 text-red-200 p-2.5 rounded flex items-start space-x-2">
+                    <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                    <span>{dbErrorMessage}</span>
+                  </div>
+                )}
+
+                <div className="mt-3 text-[11px] text-slate-400 flex flex-wrap gap-x-4">
+                  <span>* ប្រសិនបើអ្នកមិនទាន់បានបង្កើត table SQL សម្បូរព័ត៌មាននៅក្នុង Supabase ទេ សូមចុចចម្លង DDL setup code នៅផ្នែកខាងក្រោមទំព័រនេះ។</span>
+                </div>
               </div>
             )}
-
-            <div className="mt-2 text-[11px] text-slate-400 flex flex-wrap gap-x-4">
-              <span>* ប្រសិនបើអ្នកមិនទាន់បានបង្កើត table SQL សម្បូរព័ត៌មាននៅក្នុង Supabase ទេ សូមចុចចម្លង DDL setup code នៅផ្នែកខាងក្រោមទំព័រនេះ។</span>
-            </div>
           </div>
         </div>
       )}
@@ -3044,6 +3175,66 @@ export default function App() {
                   </div>
                 </div>
 
+                {/* KHQR SETTINGS SECTION FOR HOST */}
+                <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6 mb-4">
+                  <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowKhqrSettings(!showKhqrSettings)}>
+                    <div className="flex items-center space-x-3">
+                      <div className="p-2.5 bg-rose-50 text-rose-600 rounded-xl">
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm14 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"></path></svg>
+                      </div>
+                      <div>
+                        <h3 className="text-sm font-bold text-slate-800 leading-snug">
+                          ⚙️ ការកំណត់ KHQR លុយចងដៃ (បច្ចុប្បន្នភាព)
+                        </h3>
+                        <p className="text-[11px] text-slate-400 mt-0.5">បើក/បិទ KHQR ឬ បន្ថែម-កែប្រែ រូបភាព QR Code សម្រាប់ប្រាក់រៀល-ដុល្លារ</p>
+                      </div>
+                    </div>
+                    <span className="p-1 px-3 bg-slate-100 hover:bg-slate-200 text-slate-550 rounded-lg text-xs font-bold transition-all whitespace-nowrap">
+                      {showKhqrSettings ? 'លាក់ការកំណត់ ▴' : 'បង្ហាញការកំណត់ ▾'}
+                    </span>
+                  </div>
+
+                  {showKhqrSettings && (
+                    <div className="pt-5 animate-fade-in font-sans border-t border-slate-100 mt-5">
+                      <form onSubmit={handleUpdateKhqrSettings} className="space-y-4">
+                        <div className="space-y-1.5">
+                          <label className="block text-xs font-bold text-slate-700">Link រូបភាព KHQR សម្រាប់ប្រាក់រៀល (KHR) *</label>
+                          <input
+                            type="text"
+                            placeholder="ឧទាហរណ៍៖ https://i.ibb.co/..."
+                            value={editKhqrUrl}
+                            onChange={(e) => setEditKhqrUrl(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-slate-800 text-xs font-mono focus:ring-2 focus:ring-rose-500/20 focus:outline-none transition-all"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-1.5">
+                          <label className="block text-xs font-bold text-slate-700">Link រូបភាព KHQR សម្រាប់ប្រាក់ដុល្លារ (USD) (ស្រេចចិត្ត)</label>
+                          <input
+                            type="text"
+                            placeholder="ឧទាហរណ៍៖ https://i.ibb.co/..."
+                            value={editKhqrUsdUrl}
+                            onChange={(e) => setEditKhqrUsdUrl(e.target.value)}
+                            className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-slate-800 text-xs font-mono focus:ring-2 focus:ring-rose-500/20 focus:outline-none transition-all"
+                          />
+                        </div>
+                        
+                        <div className="flex justify-end pt-2">
+                          <button
+                            type="submit"
+                            disabled={isSavingKhqr}
+                            className={`px-5 py-2 text-xs text-white font-bold rounded-xl transition shadow-sm ${
+                              isSavingKhqr ? 'bg-slate-400 cursor-not-allowed' : 'bg-rose-500 hover:bg-rose-600 hover:shadow-md'
+                            }`}
+                          >
+                            {isSavingKhqr ? 'កំពុងរក្សាទុក...' : 'រក្សាទុកលេខកូដ KHQR'}
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  )}
+                </div>
+
                 {/* TELEGRAM NOTIFICATION BOT SETTINGS SECTION */}
                 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
                   <div className="flex items-center justify-between cursor-pointer" onClick={() => setShowTelegramSettings(!showTelegramSettings)}>
@@ -3689,18 +3880,28 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
       {/* Supabase Technical Documentation & Copier Section (Collapsible) */}
       <footer className="bg-slate-900 text-slate-300 border-t border-slate-800 mt-12 py-10 px-4 font-sans text-xs">
         <div className="max-w-5xl mx-auto space-y-6">
-          <div className="border-b border-slate-800 pb-4">
-            <h3 className="text-white font-bold text-base flex items-center gap-2">
-              <span>🛠️ របៀបតម្លើង PostgreSQL Database ក្នុង Supabase</span>
-            </h3>
-            <p className="text-slate-400 text-xs mt-1">
-              សូមអនុវត្តតាមការណែនាំខាងក្រោម ដើម្បីដំណើរការ Database និងបញ្ជីអាសយដ្ឋានរដ្ឋបាលកម្ពុជានៅលើគណនី Supabase ផ្ទាល់ខ្លួនរបស់អ្នក។
-            </p>
+          <div className="border-b border-slate-800 pb-4 flex justify-between items-start">
+            <div>
+              <h3 className="text-white font-bold text-base flex items-center gap-2">
+                <span>🛠️ របៀបតម្លើង PostgreSQL Database ក្នុង Supabase</span>
+              </h3>
+              <p className="text-slate-400 text-xs mt-1">
+                សូមអនុវត្តតាមការណែនាំខាងក្រោម ដើម្បីដំណើរការ Database និងបញ្ជីអាសយដ្ឋានរដ្ឋបាលកម្ពុជានៅលើគណនី Supabase ផ្ទាល់ខ្លួនរបស់អ្នក។
+              </p>
+            </div>
+            <button
+              onClick={() => setShowSqlDocs(!showSqlDocs)}
+              className="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap"
+            >
+              {showSqlDocs ? 'លាក់ការណែនាំ ▴' : 'បង្ហាញការណែនាំ ▾'}
+            </button>
           </div>
 
-          {/* Explanation Alert Box for 'Query is too large' Error */}
-          <div className="bg-amber-950/40 border border-amber-900/50 p-4.5 rounded-xl text-amber-200/90 leading-relaxed space-y-2">
-            <h4 className="font-bold text-amber-400 text-xs flex items-center gap-1.5 uppercase tracking-wide">
+          {showSqlDocs && (
+            <div className="space-y-6 animate-fade-in">
+              {/* Explanation Alert Box for 'Query is too large' Error */}
+              <div className="bg-amber-950/40 border border-amber-900/50 p-4.5 rounded-xl text-amber-200/90 leading-relaxed space-y-2">
+                <h4 className="font-bold text-amber-400 text-xs flex items-center gap-1.5 uppercase tracking-wide">
               <span>⚠️ របៀបដោះស្រាយបញ្ហា "Query is too large to be run via the SQL Editor" និងកុំឱ្យបាត់បង់ទិន្នន័យចាស់</span>
             </h4>
             <div className="space-y-1.5 text-[11px] leading-normal font-sans">
@@ -3845,6 +4046,8 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
               </>
             )}
           </div>
+          </div>
+          )}
 
           <p className="text-center text-slate-500 text-[10px]">
             រៀបចំឡើងដោយបច្ចេកវិទ្យា Supabase, Vite, Tailwind CSS, និង React 19 - រក្សាសិទ្ធគ្រប់យ៉ាង © 2026
