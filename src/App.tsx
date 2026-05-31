@@ -29,7 +29,9 @@ import {
   Printer,
   Camera,
   Scan,
-  Send
+  Send,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import * as XLSX from 'xlsx';
@@ -401,6 +403,8 @@ export default function App() {
   const [saasAuthLoading, setSaasAuthLoading] = useState(true);
   const [authEmail, setAuthEmail] = useState('');
   const [authPassword, setAuthPassword] = useState('');
+  const [authUsername, setAuthUsername] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [isLoginMode, setIsLoginMode] = useState(true);
   const [authProcessing, setAuthProcessing] = useState(false);
 
@@ -1074,6 +1078,11 @@ export default function App() {
         const { error } = await supabaseClient.auth.signUp({
           email: authEmail,
           password: authPassword,
+          options: {
+            data: {
+              username: authUsername,
+            }
+          }
         });
         if (error) throw error;
         showNotification('បង្កើតគណនីបានជោគជ័យ សូមចូលប្រព័ន្ធ', 'success');
@@ -1142,10 +1151,6 @@ export default function App() {
     }
     if (!guestName.trim()) {
       showNotification('សូមបំពេញឈ្មោះរបស់អ្នក!', 'error');
-      return;
-    }
-    if (!guestPhone.trim()) {
-      showNotification('សូមបំពេញលេខទូរស័ព្ទរបស់អ្នក!', 'error');
       return;
     }
 
@@ -1392,6 +1397,36 @@ export default function App() {
       } else {
         showNotification(`ការបង្កើតបរាជ័យ៖ ${err.message || err}`, 'error');
       }
+    }
+  };
+
+  // ADMIN DELETE WEDDING EVENT
+  const handleDeleteWedding = async (weddingId: string) => {
+    if (!window.confirm('តើអ្នកពិតជាចង់លុបកម្មវិធីនេះមែនទេ? ទិន្នន័យភ្ញៀវទាំងអស់ក្នុងកម្មវិធីនេះនឹងត្រូវលុបដោយស្វ័យប្រវត្តិ។')) return;
+
+    try {
+      if (connectionMode === 'supabase' && supabaseClient) {
+        const { error } = await supabaseClient
+          .from('weddings')
+          .delete()
+          .eq('id', weddingId);
+
+        if (error) throw error;
+      }
+
+      // Update local state
+      const updatedWeddings = weddings.filter((w) => w.id !== weddingId);
+      setWeddings(updatedWeddings);
+      setGuests(guests.filter(g => g.wedding_id !== weddingId)); // Remove guests associated with this wedding
+
+      if (selectedWeddingId === weddingId) {
+        setSelectedWeddingId(updatedWeddings.length > 0 ? updatedWeddings[0].id : '');
+      }
+
+      syncLocalData(updatedWeddings, guests.filter(g => g.wedding_id !== weddingId));
+      showNotification('បានលុបកម្មវិធីដោយជោគជ័យ', 'info');
+    } catch (err: any) {
+      showNotification(`ការលុបបរាជ័យ៖ ${err.message || String(err)}`, 'error');
     }
   };
 
@@ -2414,6 +2449,19 @@ export default function App() {
             </div>
             
             <form onSubmit={handleSaaSAuth} className="space-y-4">
+              {!isLoginMode && (
+                <div>
+                  <label className="block text-sm font-bold text-slate-700 mb-1.5">គណនី (Username)</label>
+                  <input
+                    type="text"
+                    required={!isLoginMode}
+                    value={authUsername}
+                    onChange={(e) => setAuthUsername(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
+                    placeholder="Username"
+                  />
+                </div>
+              )}
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1.5">អ៊ីមែល (Email)</label>
                 <input
@@ -2427,14 +2475,23 @@ export default function App() {
               </div>
               <div>
                 <label className="block text-sm font-bold text-slate-700 mb-1.5">ពាក្យសម្ងាត់ (Password)</label>
-                <input
-                  type="password"
-                  required
-                  value={authPassword}
-                  onChange={(e) => setAuthPassword(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-                  placeholder="••••••••"
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20 pr-12"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  </button>
+                </div>
               </div>
               
               <button
@@ -2604,7 +2661,6 @@ export default function App() {
                     <div>
                       <label className="block text-slate-700 font-medium text-xs mb-1.5 flex items-center gap-1">
                         <span>លេខទូរស័ព្ទ (Phone Number)</span>
-                        <span className="text-rose-500">*</span>
                       </label>
                       <input
                         type="tel"
@@ -2613,7 +2669,6 @@ export default function App() {
                         onChange={(e) => setGuestPhone(e.target.value)}
                         className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3.5 md:py-3 text-slate-800 text-sm focus:ring-2 focus:ring-rose-500/20 focus:border-rose-400 focus:bg-white focus:outline-none transition-all"
                         id="inp-guest-phone"
-                        required
                       />
                     </div>
 
@@ -2967,7 +3022,7 @@ export default function App() {
                       </select>
                     </div>
 
-                    <div className="self-end">
+                    <div className="self-end flex items-center gap-2">
                       <button
                         onClick={() => setShowAddWeddingModal(true)}
                         className="bg-wedding-50 hover:bg-wedding-100 border border-wedding-200 text-wedding-700 font-semibold py-2 px-3 rounded-xl text-xs transition flex items-center space-x-1 cursor-pointer"
@@ -2976,6 +3031,17 @@ export default function App() {
                         <Plus className="w-4 h-4" />
                         <span>បង្កើតកម្មវិធីថ្មី</span>
                       </button>
+                      
+                      {selectedWeddingId && (
+                        <button
+                          onClick={() => handleDeleteWedding(selectedWeddingId)}
+                          className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-semibold py-2 px-3 rounded-xl text-xs transition flex items-center space-x-1 cursor-pointer ml-auto"
+                          title="លុបកម្មវិធីនេះ"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                          <span>លុបកម្មវិធីនេះ</span>
+                        </button>
+                      )}
                     </div>
                   </div>
 
