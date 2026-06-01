@@ -411,7 +411,7 @@ export default function App() {
 
   // ACLEDA Mobile HUD integrations status
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [mobileActiveView, setMobileActiveView] = useState<'home' | 'register' | 'list' | 'scan' | 'khqr' | 'telegram' | 'supabase_settings' | 'bonds'>('home');
+  const [mobileActiveView, setMobileActiveView] = useState<'home' | 'register' | 'list' | 'scan' | 'khqr' | 'telegram' | 'supabase_settings' | 'bonds' | 'mobile_auth'>('home');
   const [mobileTime, setMobileTime] = useState('16:37');
   const [mobilePopup, setMobilePopup] = useState<'invite' | 'bridegroom' | 'food' | 'gallery' | 'blessing' | null>(null);
   const [customBlessingText, setCustomBlessingText] = useState('');
@@ -1132,6 +1132,13 @@ export default function App() {
       setIsAdminLoggedIn(false);
     }
   }, [connectionMode, supabaseClient]);
+
+  // Redirect to home on successful mobile login
+  useEffect(() => {
+    if (saasSession && mobileActiveView === 'mobile_auth') {
+      setMobileActiveView('home');
+    }
+  }, [saasSession, mobileActiveView]);
 
   // Refetch data when session changes
   useEffect(() => {
@@ -2429,6 +2436,15 @@ export default function App() {
     setMobilePopup(null);
   };
 
+  const ensureSaasActive = (onValid: () => void) => {
+    if (connectionMode === 'supabase' && !saasSession) {
+      showNotification('សូមចុះឈ្មោះ ឬចូលគណនីម្ចាស់កម្មវិធីជាមុនសិន!', 'error');
+      setMobileActiveView('mobile_auth');
+    } else {
+      onValid();
+    }
+  };
+
   const renderMobileAcledaLayout = () => {
     const formattedTotalUSD = stats.totalGiftMoneyUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     const formattedTotalKHR = stats.totalGiftMoneyKHR.toLocaleString('km-KH');
@@ -2478,18 +2494,35 @@ export default function App() {
               <span className="absolute top-1 right-1 w-2 h-2 bg-rose-600 rounded-full"></span>
             </button>
 
-            {/* Role Switcher Button - ACLEDA Red power button style */}
-            <button 
-              onClick={() => {
-                const nextRole = currentRole === 'guest' ? 'dashboard' : 'guest';
-                setCurrentRole(nextRole);
-                showNotification(`បានប្តូរទៅកាន់៖ ${nextRole === 'guest' ? 'ទំព័រភ្ញៀវ (Guest View)' : 'ផ្ទាំងគ្រប់គ្រង (Dashboard View)'}`, 'success');
-              }}
-              className="p-1.5 bg-[#e52e40] hover:bg-red-600 active:bg-red-700 text-white rounded-lg shadow-md shadow-red-600/30 transition border border-red-500/20"
-              title="ប្តូរតួនាទី"
-            >
-              <UserCheck className="w-4 h-4 stroke-[2.5]" />
-            </button>
+            {/* Role Switcher Button - ACLEDA Red power button style or Logout button */}
+            {connectionMode === 'supabase' && saasSession ? (
+              <button 
+                onClick={handleSaaSSignOut} 
+                className="p-1.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-lg shadow transition border border-rose-500/20"
+                title="ចាកចេញ (Sign Out)"
+              >
+                <LogOut className="w-4 h-4" />
+              </button>
+            ) : (
+              <button 
+                onClick={() => {
+                  const nextRole = currentRole === 'guest' ? 'dashboard' : 'guest';
+                  if (nextRole === 'dashboard') {
+                    ensureSaasActive(() => {
+                      setCurrentRole('dashboard');
+                      showNotification('បានប្តូរទៅកាន់ផ្ទាំងគ្រប់គ្រង (Dashboard)', 'success');
+                    });
+                  } else {
+                    setCurrentRole('guest');
+                    showNotification('បានប្តូរទៅកាន់ទំព័រភ្ញៀវ (Guest View)', 'success');
+                  }
+                }}
+                className="p-1.5 bg-[#e52e40] hover:bg-red-600 active:bg-red-700 text-white rounded-lg shadow-md shadow-red-600/30 transition border border-red-500/20"
+                title="ប្តូរតួនាទី"
+              >
+                <UserCheck className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            )}
           </div>
         </header>
 
@@ -2553,7 +2586,11 @@ export default function App() {
 
                 {/* 3. Transfer -> Mapped to Guest List */}
                 <button 
-                  onClick={() => setMobileActiveView('list')}
+                  onClick={() => {
+                    ensureSaasActive(() => {
+                      setMobileActiveView('list');
+                    });
+                  }}
                   className="flex flex-col items-center justify-center py-7 px-2 active:bg-[#112d4d]/80 transition text-center space-y-3"
                 >
                   <div className="w-11 h-11 bg-sky-500/10 text-sky-400 rounded-2xl flex items-center justify-center border border-sky-500/20">
@@ -2584,8 +2621,10 @@ export default function App() {
                 {/* 5. Accounts -> Admin mode login panel (now 5th item) */}
                 <button 
                   onClick={() => {
-                    setCurrentRole('dashboard');
-                    showNotification('សូមចូលគណនីរបស់អ្នកដើម្បីគ្រប់គ្រងកម្មវិធី!', 'info');
+                    ensureSaasActive(() => {
+                      setCurrentRole('dashboard');
+                      showNotification('សូមចូលគណនីរបស់អ្នកដើម្បីគ្រប់គ្រងកម្មវិធី!', 'info');
+                    });
                   }}
                   className="flex flex-col items-center justify-center py-7 px-2 active:bg-[#112d4d]/80 transition text-center space-y-3"
                 >
@@ -2597,7 +2636,11 @@ export default function App() {
 
                 {/* 6. Deposits -> Events stats & summary (now 6th item) */}
                 <button 
-                  onClick={() => setMobileActiveView('bonds')}
+                  onClick={() => {
+                    ensureSaasActive(() => {
+                      setMobileActiveView('bonds');
+                    });
+                  }}
                   className="flex flex-col items-center justify-center py-7 px-2 active:bg-[#112d4d]/80 transition text-center space-y-3"
                 >
                   <div className="w-11 h-11 bg-teal-500/10 text-teal-400 rounded-2xl flex items-center justify-center border border-teal-500/20">
@@ -3372,6 +3415,117 @@ export default function App() {
           </div>
         )}
 
+        {/* MOBILE AUTH SCREEN */}
+        {mobileActiveView === 'mobile_auth' && (
+          <div className="flex-1 overflow-y-auto p-5 animate-fade-in text-slate-100 flex flex-col justify-center max-w-sm mx-auto w-full">
+            <div className="text-center mb-8">
+              <div className="w-14 h-14 bg-rose-500/10 text-rose-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-rose-500/20">
+                <Database className="w-7 h-7" />
+              </div>
+              <h2 className="text-lg font-black text-white">
+                {isLoginMode ? 'ចូលប្រើប្រាស់ប្រព័ន្ធ (SaaS)' : 'ចុះឈ្មោះគណនីថ្មី (SaaS)'}
+              </h2>
+              <p className="text-[11px] text-slate-300 mt-1.5 max-w-xs mx-auto leading-relaxed">
+                ម្ចាស់កម្មវិធីត្រូវតែចុះឈ្មោះ ឬចូលគណនីជាមុនសិន ដើម្បីប្រើប្រាស់មុខងារគ្រប់គ្រង។
+              </p>
+            </div>
+
+            <form onSubmit={handleSaaSAuth} className="space-y-4 text-xs font-sans">
+              {!isLoginMode && (
+                <div>
+                  <label className="block text-slate-200 mt-1 font-bold mb-1.5 text-left">គណនី (Username) *</label>
+                  <input
+                    type="text"
+                    required={!isLoginMode}
+                    value={authUsername}
+                    onChange={(e) => setAuthUsername(e.target.value)}
+                    className="w-full bg-[#112d4d] border border-slate-700/60 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500 text-xs"
+                    placeholder="Username"
+                  />
+                </div>
+              )}
+              <div>
+                <label className="block text-slate-200 mt-1 font-bold mb-1.5 text-left">អ៊ីមែល (Email) *</label>
+                <input
+                  type="email"
+                  required
+                  value={authEmail}
+                  onChange={(e) => setAuthEmail(e.target.value)}
+                  className="w-full bg-[#112d4d] border border-slate-700/60 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500 text-xs"
+                  placeholder="name@example.com"
+                />
+              </div>
+              <div>
+                <label className="block text-slate-200 mt-1 font-bold mb-1.5 text-left">ពាក្យសម្ងាត់ (Password) *</label>
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    required
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    className="w-full bg-[#112d4d] border border-slate-700/60 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500 pr-12 text-xs"
+                    placeholder="••••••••"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 focus:outline-none cursor-pointer text-xs"
+                  >
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={authProcessing}
+                className="w-full bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold rounded-xl py-3 mt-4 transition duration-155 shadow-md shadow-rose-600/20 disabled:opacity-50"
+              >
+                {authProcessing ? 'កំពុងដំណើរការ...' : isLoginMode ? 'ចូលប្រព័ន្ធ (Login)' : 'បង្កើតគណនី (Sign Up)'}
+              </button>
+
+              {!isLoginMode && (
+                <div className="mt-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-slate-700/60"></div>
+                    </div>
+                    <div className="relative flex justify-center text-[10px]">
+                      <span className="px-2 bg-[#0d213a] text-slate-400">Or</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleGoogleAuth}
+                    disabled={authProcessing}
+                    className="w-full mt-4 flex items-center justify-center gap-2 bg-[#112d4d] border border-slate-700/60 text-slate-200 hover:bg-slate-800 font-bold rounded-xl py-3 transition disabled:opacity-50 text-xs"
+                  >
+                    ភ្ជាប់ជាមួយ Gmail (Google)
+                  </button>
+                </div>
+              )}
+            </form>
+
+            <div className="mt-6 text-center">
+              <button
+                type="button"
+                onClick={handleAuthModeSwitch}
+                className="text-xs text-rose-400 font-bold hover:underline"
+              >
+                {isLoginMode ? 'មិនទាន់មានគណនី? ចុះឈ្មោះឥឡូវនេះ' : 'មានគណនីរួចហើយ? ចូលប្រព័ន្ធ'}
+              </button>
+            </div>
+            
+            <button
+              onClick={() => setMobileActiveView('home')}
+              className="mt-6 text-xs text-slate-400 hover:text-white"
+            >
+              ត្រលប់ទៅទំព័រដើមវិញ
+            </button>
+          </div>
+        )}
+
         {/* ========================================= */}
         {/* INTERACTIVE MOCK POPUPS (PUBLIC SERVICES) */}
         {/* ========================================= */}
@@ -3524,7 +3678,9 @@ export default function App() {
           {/* ACLEDA ACTIVE BLUE CIRCULAR BUTTON */}
           <button 
             onClick={() => {
-              setShowQrScanner(true);
+              ensureSaasActive(() => {
+                setShowQrScanner(true);
+              });
             }}
             className="w-13 h-13 bg-gradient-to-tr from-[#132d4a] to-[#204a75] rounded-full border-4 border-white -mt-5 shadow-lg shadow-sky-900/30 flex items-center justify-center text-white active:scale-95 transition"
           >
@@ -3533,8 +3689,10 @@ export default function App() {
 
           <button 
             onClick={() => {
-              setMobileActiveView('list');
-              setMobilePopup(null);
+              ensureSaasActive(() => {
+                setMobileActiveView('list');
+                setMobilePopup(null);
+              });
             }} 
             className={`flex flex-col items-center space-y-1 ${mobileActiveView === 'list' ? 'text-rose-500' : 'hover:text-rose-500'}`}
           >
@@ -3544,8 +3702,10 @@ export default function App() {
 
           <button 
             onClick={() => {
-              setMobileActiveView('bonds');
-              setMobilePopup(null);
+              ensureSaasActive(() => {
+                setMobileActiveView('bonds');
+                setMobilePopup(null);
+              });
             }} 
             className={`flex flex-col items-center space-y-1 ${mobileActiveView === 'bonds' ? 'text-rose-500' : 'hover:text-rose-500'}`}
           >
@@ -3769,7 +3929,7 @@ export default function App() {
             <div className="w-10 h-10 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
             <p className="mt-4 text-slate-500 font-medium">កំពុងផ្ទៀងផ្ទាត់គណនី...</p>
           </div>
-        ) : connectionMode === 'supabase' && !saasSession ? (
+        ) : connectionMode === 'supabase' && !saasSession && !new URLSearchParams(window.location.search).get('weddingId') ? (
           <div className="max-w-md mx-auto mt-6 bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8">
             <div className="text-center mb-8">
               <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
