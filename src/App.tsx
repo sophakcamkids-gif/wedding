@@ -1034,6 +1034,9 @@ export default function App() {
         // Fetch Data from live Supabase Tables
         const fetchRemoteData = async () => {
           // 1. Fetch Weddings
+          const urlParams = new URLSearchParams(window.location.search);
+          const queryWeddingId = urlParams.get('weddingId');
+
           let weddingsQuery = client
             .from('weddings')
             .select('*')
@@ -1041,14 +1044,20 @@ export default function App() {
             .order('created_at', { ascending: false });
           
           if (saasSession?.user?.id) {
-            weddingsQuery = weddingsQuery.eq('user_id', saasSession.user.id);
+            if (queryWeddingId) {
+              weddingsQuery = weddingsQuery.or(`user_id.eq.${saasSession.user.id},id.eq.${queryWeddingId}`);
+            } else {
+              weddingsQuery = weddingsQuery.eq('user_id', saasSession.user.id);
+            }
+          } else if (queryWeddingId) {
+            weddingsQuery = weddingsQuery.eq('id', queryWeddingId);
           }
 
           let { data: weddingsData, error: weddingsError } = await weddingsQuery;
 
           // Fallback if querying fails because user_id does not exist
           if (weddingsError && weddingsError.message?.includes('user_id')) {
-             const fallbackQuery = await supabaseClient.from('weddings').select('*').limit(10000).order('created_at', { ascending: false });
+             const fallbackQuery = await client.from('weddings').select('*').limit(10000).order('created_at', { ascending: false });
              weddingsData = fallbackQuery.data;
              weddingsError = fallbackQuery.error;
           }
@@ -1071,7 +1080,9 @@ export default function App() {
           setWeddings(weddingsData || []);
           setGuests(guestsData || []);
           
-          if (weddingsData && weddingsData.length > 0) {
+          if (queryWeddingId && weddingsData && weddingsData.some(w => w.id === queryWeddingId)) {
+            setSelectedWeddingId(queryWeddingId);
+          } else if (weddingsData && weddingsData.length > 0) {
             setSelectedWeddingId(weddingsData[0].id);
           }
           
@@ -1126,15 +1137,37 @@ export default function App() {
   useEffect(() => {
     if (connectionMode === 'supabase' && supabaseClient && saasSession) {
       const fetchData = async () => {
-        let wDataRes = await supabaseClient.from('weddings').select('*').eq('user_id', saasSession.user.id).order('created_at', { ascending: false });
+        const urlParams = new URLSearchParams(window.location.search);
+        const queryWeddingId = urlParams.get('weddingId');
+
+        let weddingsQuery = supabaseClient.from('weddings').select('*').order('created_at', { ascending: false });
+        if (queryWeddingId) {
+          weddingsQuery = weddingsQuery.or(`user_id.eq.${saasSession.user.id},id.eq.${queryWeddingId}`);
+        } else {
+          weddingsQuery = weddingsQuery.eq('user_id', saasSession.user.id);
+        }
+
+        let wDataRes = await weddingsQuery;
         // Fallback for missing user_id column
         if (wDataRes.error && wDataRes.error.message?.includes('user_id')) {
            wDataRes = await supabaseClient.from('weddings').select('*').order('created_at', { ascending: false });
         }
-        if (wDataRes.data) setWeddings(wDataRes.data);
+        if (wDataRes.data) {
+          setWeddings(wDataRes.data);
+          if (queryWeddingId && wDataRes.data.some((w: any) => w.id === queryWeddingId)) {
+            setSelectedWeddingId(queryWeddingId);
+          } else if (wDataRes.data.length > 0 && !selectedWeddingId) {
+            setSelectedWeddingId(wDataRes.data[0].id);
+          }
+        }
         
         // Fetch guests only for those weddings
-        let gDataRes = await supabaseClient.from('guests').select('*, weddings!inner(user_id)').eq('weddings.user_id', saasSession.user.id).order('created_at', { ascending: false });
+        let gDataRes;
+        if (queryWeddingId) {
+          gDataRes = await supabaseClient.from('guests').select('*, weddings!inner(user_id)').or(`wedding_id.eq.${queryWeddingId},weddings.user_id.eq.${saasSession.user.id}`).order('created_at', { ascending: false });
+        } else {
+          gDataRes = await supabaseClient.from('guests').select('*, weddings!inner(user_id)').eq('weddings.user_id', saasSession.user.id).order('created_at', { ascending: false });
+        }
         // Fallback for missing user_id column
         if (gDataRes.error && gDataRes.error.message?.includes('user_id')) {
            gDataRes = await supabaseClient.from('guests').select('*').order('created_at', { ascending: false });
@@ -2715,19 +2748,20 @@ export default function App() {
 
                 <div className="py-4 flex justify-center">
                   <div className="inline-block bg-white p-4 border-2 border-slate-100 rounded-3xl shadow-sm">
-                    <QRCodeSVG value={window.location.href} size={200} />
+                    <QRCodeSVG value={activeWedding ? `${window.location.origin}${window.location.pathname}?weddingId=${activeWedding.id}` : window.location.href} size={200} />
                   </div>
                 </div>
 
                 <div className="bg-slate-50 border border-slate-100 p-3 rounded-xl flex items-center justify-between text-left font-sans">
                   <div className="overflow-hidden mr-2">
                     <span className="block text-[9px] text-slate-400 font-bold uppercase tracking-wider">តំណភ្ជាប់ចុះឈ្មោះ (Link)</span>
-                    <span className="block text-[11px] text-slate-600 truncate font-mono select-all text-ellipsis">{window.location.href}</span>
+                    <span className="block text-[11px] text-slate-600 truncate font-mono select-all text-ellipsis">{activeWedding ? `${window.location.origin}${window.location.pathname}?weddingId=${activeWedding.id}` : window.location.href}</span>
                   </div>
                   <button
                     type="button"
                     onClick={() => {
-                      navigator.clipboard.writeText(window.location.href);
+                      const shareUrl = activeWedding ? `${window.location.origin}${window.location.pathname}?weddingId=${activeWedding.id}` : window.location.href;
+                      navigator.clipboard.writeText(shareUrl);
                       showNotification('ចម្លងតំណភ្ជាប់ជោគជ័យ!', 'success');
                     }}
                     className="bg-rose-50 hover:bg-rose-100 active:bg-rose-200 text-rose-600 font-bold text-[10px] px-3 py-2 rounded-lg transition shrink-0"
@@ -3693,7 +3727,7 @@ export default function App() {
             <span>អ្នកគ្រប់គ្រង (Dashboard)</span>
           </button>
 
-          {((connectionMode === 'supabase' && saasSession) || isDashboardLoggedIn) && currentRole !== 'guest' && (
+          {((connectionMode === 'supabase' && saasSession) || isDashboardLoggedIn) && (
             <button
               onClick={() => {
                 if (connectionMode === 'supabase' && saasSession) {
@@ -3729,20 +3763,20 @@ export default function App() {
       {/* Main Container Area */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 md:px-8 py-6 md:py-10 relative z-10">
 
-        {/* --- SaaS AUTH INTERCEPTOR FOR ORGANIZERS --- */}
-        {connectionMode === 'supabase' && saasAuthLoading && currentRole !== 'guest' ? (
+        {/* --- SaaS AUTH INTERCEPTOR --- */}
+        {connectionMode === 'supabase' && saasAuthLoading ? (
           <div className="flex flex-col items-center justify-center p-20">
             <div className="w-10 h-10 border-4 border-rose-500 border-t-transparent rounded-full animate-spin"></div>
             <p className="mt-4 text-slate-500 font-medium">កំពុងផ្ទៀងផ្ទាត់គណនី...</p>
           </div>
-        ) : connectionMode === 'supabase' && !saasSession && currentRole !== 'guest' ? (
+        ) : connectionMode === 'supabase' && !saasSession ? (
           <div className="max-w-md mx-auto mt-6 bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-8">
             <div className="text-center mb-8">
               <div className="w-16 h-16 bg-rose-100 text-rose-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
                 <Database className="w-8 h-8" />
               </div>
-              <h2 className="text-xl font-bold text-slate-800">{isLoginMode ? 'ចូលប្រើប្រាស់ប្រព័ន្ធគ្រប់គ្រង' : 'ចុះឈ្មោះម្ចាស់កម្មវិធីថ្មី (SaaS)'}</h2>
-              <p className="text-xs text-slate-500 mt-2">សូមចូលគណនីរបស់អ្នកដើម្បីគ្រប់គ្រងទិន្នន័យពិធីរបស់អ្នក</p>
+              <h2 className="text-xl font-bold text-slate-800">{isLoginMode ? 'ចូលប្រើប្រាស់ប្រព័ន្ធ' : 'ចុះឈ្មោះគណនីថ្មី (SaaS)'}</h2>
+              <p className="text-xs text-slate-500 mt-2">សូមចូលគណនីរបស់អ្នកដើម្បីបន្តប្រើប្រាស់កម្មវិធី</p>
             </div>
             
             <form onSubmit={handleSaaSAuth} className="space-y-4">
@@ -3841,30 +3875,41 @@ export default function App() {
           <div className="max-w-2xl mx-auto">
             
             {/* Wedding selection dropdown */}
-            <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 mb-6">
-              <label className="block text-slate-700 font-medium text-sm mb-2 text-center md:text-left">
-                សូមជ្រើសរើសកម្មវិធីដែលអ្នកត្រូវចូលរួម៖
-              </label>
-              {weddings.length === 0 ? (
-                <div className="py-2.5 text-center text-slate-400 text-xs">
-                  មិនទាន់មានកម្មវិធីណាមួយត្រូវបានបង្កើតឡើងនៅឡើយទេ។ សូមបង្កើតក្នុងឋានៈជា Admin ជាមុនសិន។
+            {(new URLSearchParams(window.location.search).get('weddingId')) ? (
+              activeWedding && (
+                <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 mb-6 text-center">
+                  <span className="bg-rose-500/10 text-rose-600 text-[10px] uppercase font-bold tracking-wider px-3 py-1 rounded-full animate-pulse">
+                    លោកអ្នកកំពុងចុះឈ្មោះចូលរួមក្នុងកម្មវិធី៖
+                  </span>
+                  <h2 className="text-xl font-bold text-slate-800 mt-2.5">{activeWedding.title}</h2>
                 </div>
-              ) : (
-                <select
-                  value={selectedWeddingId}
-                  onChange={(e) => {
-                    setSelectedWeddingId(e.target.value);
-                    setRegistrationSuccess(false);
-                  }}
-                  className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3.5 md:py-3 text-slate-800 font-semibold focus:ring-2 focus:ring-rose-500/20 focus:outline-none transition-all cursor-pointer text-sm"
-                  id="sel-wedding-guest-view"
-                >
-                  {weddings.map((w) => (
-                    <option key={w.id} value={w.id}>{w.title}</option>
-                  ))}
-                </select>
-              )}
-            </div>
+              )
+            ) : (
+              <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 mb-6">
+                <label className="block text-slate-700 font-medium text-sm mb-2 text-center md:text-left">
+                  សូមជ្រើសរើសកម្មវិធីដែលអ្នកត្រូវចូលរួម៖
+                </label>
+                {weddings.length === 0 ? (
+                  <div className="py-2.5 text-center text-slate-400 text-xs">
+                    មិនទាន់មានកម្មវិធីណាមួយត្រូវបានបង្កើតឡើងនៅឡើយទេ។ សូមបង្កើតក្នុងឋានៈជា Admin ជាមុនសិន។
+                  </div>
+                ) : (
+                  <select
+                    value={selectedWeddingId}
+                    onChange={(e) => {
+                      setSelectedWeddingId(e.target.value);
+                      setRegistrationSuccess(false);
+                    }}
+                    className="w-full bg-slate-50 hover:bg-slate-100 border border-slate-200 rounded-2xl px-5 py-3.5 md:py-3 text-slate-800 font-semibold focus:ring-2 focus:ring-rose-500/20 focus:outline-none transition-all cursor-pointer text-sm"
+                    id="sel-wedding-guest-view"
+                  >
+                    {weddings.map((w) => (
+                      <option key={w.id} value={w.id}>{w.title}</option>
+                    ))}
+                  </select>
+                )}
+              </div>
+            )}
 
             {registrationSuccess ? (
               /* Success Landing Card */
