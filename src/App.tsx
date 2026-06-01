@@ -307,6 +307,7 @@ CREATE TABLE IF NOT EXISTS public.villages (
 
 -- 2. Safely add missing columns to 'guests' and 'weddings' tables if they don't exist yet
 ALTER TABLE public.weddings ADD COLUMN IF NOT EXISTS khqr_usd_img_url TEXT;
+ALTER TABLE public.weddings ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id);
 
 ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS companions INTEGER DEFAULT 0;
 ALTER TABLE public.guests ADD COLUMN IF NOT EXISTS status VARCHAR(50) DEFAULT 'pending';
@@ -983,7 +984,14 @@ export default function App() {
             weddingsQuery = weddingsQuery.eq('user_id', saasSession.user.id);
           }
 
-          const { data: weddingsData, error: weddingsError } = await weddingsQuery;
+          let { data: weddingsData, error: weddingsError } = await weddingsQuery;
+
+          // Fallback if querying fails because user_id does not exist
+          if (weddingsError && weddingsError.message?.includes('user_id')) {
+             const fallbackQuery = await supabaseClient.from('weddings').select('*').limit(10000).order('created_at', { ascending: false });
+             weddingsData = fallbackQuery.data;
+             weddingsError = fallbackQuery.error;
+          }
 
           if (weddingsError) {
             throw weddingsError;
@@ -1058,12 +1066,20 @@ export default function App() {
   useEffect(() => {
     if (connectionMode === 'supabase' && supabaseClient && saasSession) {
       const fetchData = async () => {
-        const { data: wData } = await supabaseClient.from('weddings').select('*').eq('user_id', saasSession.user.id).order('created_at', { ascending: false });
-        if (wData) setWeddings(wData);
+        let wDataRes = await supabaseClient.from('weddings').select('*').eq('user_id', saasSession.user.id).order('created_at', { ascending: false });
+        // Fallback for missing user_id column
+        if (wDataRes.error && wDataRes.error.message?.includes('user_id')) {
+           wDataRes = await supabaseClient.from('weddings').select('*').order('created_at', { ascending: false });
+        }
+        if (wDataRes.data) setWeddings(wDataRes.data);
         
         // Fetch guests only for those weddings
-        const { data: gData } = await supabaseClient.from('guests').select('*, weddings!inner(user_id)').eq('weddings.user_id', saasSession.user.id).order('created_at', { ascending: false });
-        if (gData) setGuests(gData);
+        let gDataRes = await supabaseClient.from('guests').select('*, weddings!inner(user_id)').eq('weddings.user_id', saasSession.user.id).order('created_at', { ascending: false });
+        // Fallback for missing user_id column
+        if (gDataRes.error && gDataRes.error.message?.includes('user_id')) {
+           gDataRes = await supabaseClient.from('guests').select('*').order('created_at', { ascending: false });
+        }
+        if (gDataRes.data) setGuests(gDataRes.data);
       };
       fetchData();
     }
@@ -1354,11 +1370,29 @@ export default function App() {
 
     try {
       if (connectionMode === 'supabase' && supabaseClient) {
-        const payloadToInsert = saasSession?.user?.id ? { ...newW, user_id: saasSession.user.id } : newW;
-        const { data, error } = await supabaseClient
+        const payloadToInsert = saasSession?.user?.id ? { ...newW, user_id: saasSession.user.id } : { ...newW };
+        
+        let response = await supabaseClient
           .from('weddings')
           .insert([payloadToInsert])
           .select();
+
+        if (response.error && (response.error.message?.includes('khqr_usd_img_url') || response.error.message?.includes('user_id'))) {
+          // Fallback: Strip newly added columns if database is old
+          const safePayload = {
+            id: payloadToInsert.id,
+            title: payloadToInsert.title,
+            host_username: payloadToInsert.host_username,
+            host_password: payloadToInsert.host_password,
+            khqr_img_url: payloadToInsert.khqr_img_url
+          };
+          response = await supabaseClient
+            .from('weddings')
+            .insert([safePayload])
+            .select();
+        }
+
+        const { data, error } = response;
 
         if (error) throw error;
 
@@ -2005,10 +2039,20 @@ export default function App() {
         // if user clears USD url, we can null it out if we want, but let's assume they want it empty
         else updatePayload.khqr_usd_img_url = null;
 
-        const { error } = await supabaseClient
+        let updateResponse = await supabaseClient
           .from('weddings')
           .update(updatePayload)
           .eq('id', activeWId);
+
+        if (updateResponse.error && updateResponse.error.message?.includes('khqr_usd_img_url')) {
+          const safePayload = { khqr_img_url: updatePayload.khqr_img_url };
+          updateResponse = await supabaseClient
+            .from('weddings')
+            .update(safePayload)
+            .eq('id', activeWId);
+        }
+
+        const { error } = updateResponse;
 
         if (error) {
           console.warn("Could not update Supabase KHQR columns:", error);
