@@ -2548,18 +2548,7 @@ export default function App() {
                   <span className="text-xs font-bold tracking-tight text-slate-200">ប័ណ្ណ / QR ខ្ញុំ</span>
                 </button>
 
-                {/* 5. QR pay -> Live Scan check-in */}
-                <button 
-                  onClick={() => setShowQrScanner(true)}
-                  className="flex flex-col items-center justify-center py-7 px-2 active:bg-[#112d4d]/80 transition text-center space-y-3"
-                >
-                  <div className="w-11 h-11 bg-emerald-500/10 text-emerald-400 rounded-2xl flex items-center justify-center border border-emerald-500/20">
-                    <Scan className="w-6 h-6 stroke-[2]" />
-                  </div>
-                  <span className="text-xs font-bold tracking-tight text-slate-200">ស្កេន QR វត្តមាន</span>
-                </button>
-
-                {/* 6. Accounts -> Admin mode login panel */}
+                {/* 5. Accounts -> Admin mode login panel (now 5th item) */}
                 <button 
                   onClick={() => {
                     setCurrentRole('dashboard');
@@ -2573,7 +2562,7 @@ export default function App() {
                   <span className="text-xs font-bold tracking-tight text-slate-200">ផ្ទាំងគ្រប់គ្រង</span>
                 </button>
 
-                {/* 7. Deposits -> Events stats & summary */}
+                {/* 6. Deposits -> Events stats & summary (now 6th item) */}
                 <button 
                   onClick={() => setMobileActiveView('bonds')}
                   className="flex flex-col items-center justify-center py-7 px-2 active:bg-[#112d4d]/80 transition text-center space-y-3"
@@ -2584,38 +2573,7 @@ export default function App() {
                   <span className="text-xs font-bold tracking-tight text-slate-200">ស្ថិតិកម្មវិធី</span>
                 </button>
 
-                {/* 8. Loans -> Config Telegram Notifications */}
-                <button 
-                  onClick={() => setMobileActiveView('telegram')}
-                  className="flex flex-col items-center justify-center py-7 px-2 active:bg-[#112d4d]/80 transition text-center space-y-3"
-                >
-                  <div className="w-11 h-11 bg-green-500/10 text-green-400 rounded-2xl flex items-center justify-center border border-green-500/20">
-                    <Send className="w-6 h-6 stroke-[2]" />
-                  </div>
-                  <span className="text-xs font-bold tracking-tight text-slate-200">កំណត់ Bot</span>
-                </button>
-
-                {/* 9. Cardless cash -> Switch layout local or cloud database settings */}
-                <button 
-                  onClick={() => setMobileActiveView('supabase_settings')}
-                  className="flex flex-col items-center justify-center py-7 px-2 active:bg-[#112d4d]/80 transition text-center space-y-3"
-                >
-                  <div className="w-11 h-11 bg-[#3ecf8e]/10 text-[#3ecf8e] rounded-2xl flex items-center justify-center border border-[#3ecf8e]/20">
-                    <Database className="w-6 h-6 stroke-[2]" />
-                  </div>
-                  <span className="text-xs font-bold tracking-tight text-slate-200">ប្តូរប្រព័ន្ធ</span>
-                </button>
-
               </div>
-            </div>
-
-            {/* Actionable info banner */}
-            <div className="bg-gradient-to-r from-rose-600 to-pink-500 rounded-2xl p-4.5 text-left border border-white/5 shadow-lg flex flex-col justify-between h-32">
-              <div>
-                <span className="bg-cyan-400 text-slate-950 text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full font-sans">ទាន់ចិត្តធូរ (Calm & Quick)</span>
-                <p className="text-xs text-white/95 leading-relaxed mt-2.5 font-semibold">ងាយស្រួលគ្រប់គ្រងការងាររៀបការ វត្តមាន និងថវិកាចងដៃភ្ញៀវកិត្តិយសប្រចាំថ្ងៃរបស់លោកអ្នក!</p>
-              </div>
-              <span className="text-[9px] text-white/60 tracking-wider">ព័ត៌មានបន្ថែមសូមទាក់ទងម្ចាស់ការ</span>
             </div>
 
             {/* Public Service Mini Grid Headers */}
