@@ -7,7 +7,7 @@
 -- 1. Enable UUID Extension
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
--- 2. Drop existing tables if they exist (for clean installation)
+-- 2. Drop existing tables if they exist (WARNING: This wipes existing data)
 DROP TABLE IF EXISTS public.guests CASCADE;
 DROP TABLE IF EXISTS public.weddings CASCADE;
 DROP TABLE IF EXISTS public.admins CASCADE;
@@ -27,14 +27,21 @@ CREATE TABLE public.admins (
 -- 4. Create 'weddings' Table
 CREATE TABLE public.weddings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    user_id UUID REFERENCES auth.users(id),
     title VARCHAR(255) NOT NULL,
     host_username VARCHAR(255) UNIQUE NOT NULL,
     host_password VARCHAR(255) NOT NULL,
-    khqr_img_url TEXT NOT NULL, -- ImgBB KHQR image URL
-    telegram_token TEXT, -- Optional Telegram Bot Token
-    telegram_chat_id TEXT, -- Optional Telegram Chat ID (User/Group/Channel ID)
+    khqr_img_url TEXT NOT NULL,
+    khqr_usd_img_url TEXT,
+    telegram_token TEXT,
+    telegram_chat_id TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+ALTER TABLE public.weddings ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can read weddings" ON public.weddings FOR SELECT USING (true);
+CREATE POLICY "Users can manage their own weddings" ON public.weddings
+    FOR ALL USING (auth.uid() = user_id);
 
 -- 5. Create 'guests' Table
 CREATE TABLE public.guests (
@@ -43,11 +50,11 @@ CREATE TABLE public.guests (
     name VARCHAR(255) NOT NULL,
     phone VARCHAR(255) NOT NULL,
     companions INTEGER NOT NULL DEFAULT 0,
-    relation_type VARCHAR(255) NOT NULL, -- 'ខាងកូនកំលោះ', 'ខាងកូនក្រមុំ', 'មិត្តភក្តិ', 'ផ្សេងៗ'
+    relation_type VARCHAR(255) NOT NULL,
     amount NUMERIC(10, 2) NOT NULL DEFAULT 0.00,
     currency VARCHAR(10) NOT NULL DEFAULT 'USD',
     note TEXT,
-    status VARCHAR(50) NOT NULL DEFAULT 'pending', -- 'pending' or 'approved'
+    status VARCHAR(50) NOT NULL DEFAULT 'pending',
     province VARCHAR(255),
     district VARCHAR(255),
     commune VARCHAR(255),
@@ -57,6 +64,17 @@ CREATE TABLE public.guests (
     check_in_time VARCHAR(100),
     created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
+
+ALTER TABLE public.guests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Anyone can insert guests" ON public.guests FOR INSERT WITH CHECK (true);
+CREATE POLICY "Users can manage guests for their weddings" ON public.guests
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.weddings
+            WHERE weddings.id = guests.wedding_id
+            AND weddings.user_id = auth.uid()
+        )
+    );
 
 -- =====================================================================
 -- 6. CREATE CAMBODIA FULL ADDRESS LOOKUP TABLES
@@ -117,62 +135,112 @@ INSERT INTO public.admins (username, password)
 VALUES ('admin123', 'password123')
 ON CONFLICT (username) DO NOTHING;
 
--- Seed Dummy Wedding Event for Demonstration
-INSERT INTO public.weddings (id, title, host_username, host_password, khqr_img_url)
-VALUES (
-    'a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 
-    'មង្គលការ លី សុខា និង អ៊ឹម ចិន្តា', 
-    'wedding123', 
-    'password123', 
-    'https://i.ibb.co/6NGpLTL/sample-aba-khqr.jpg'
-)
-ON CONFLICT (host_username) DO NOTHING;
-
--- Seed initial guests for demonstration (pending / approved)
-INSERT INTO public.guests (wedding_id, name, phone, companions, relation_type, amount, currency, note, status, province, district, commune, village, address_details)
-VALUES 
-    ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'ចាន់ សុភ័ក្ត្រ', '012345678', 1, 'ខាងកូនកំលោះ', 50.00, 'USD', 'សូមជូនពរឱ្យមានសុភមង្គល!', 'approved', 'រាជធានីភ្នំពេញ', 'ខណ្ឌដូនពេញ', 'សង្កាត់ចតុមុខ', 'ភូមិ១', 'ផ្ទះលេខ ១២ ផ្លូវមហាក្សត្រ'),
-    ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'គឹម ស្រីនី', '098765432', 2, 'ខាងកូនក្រមុំ', 400000.00, 'KHR', 'ជូនពរជីវិតគូជោគជ័យ', 'approved', 'សៀមរាប', 'ក្រុងសៀមរាប', 'សង្កាត់ស្វាយដង្គំ', 'ភូមិស្វាយដង្គំ', 'ផ្ទះលេខ ៧A ផ្លូវសាលារៀន'),
-    ('a0eebc99-9c0b-4ef8-bb6d-6bb9bd380a11', 'សេង រក្សា', '077889911', 0, 'មិត្តភក្តិ', 30.00, 'USD', 'ជូនពរឱ្យស្រឡាញ់គ្នាដល់ចាស់កោងខ្នង', 'pending', 'រាជធានីភ្នំពេញ', 'ខណ្ឌសែនសុខ', 'សង្កាត់ទឹកថ្លា', 'ភូមិចុងថ្នល់', 'ផ្ទះលេខ ១០ B ផ្លូវ ២៧១')
-ON CONFLICT DO NOTHING;
-
 -- =====================================================================
 -- 8. ROW LEVEL SECURITY (RLS) POLICIES
 -- =====================================================================
 
--- Enable RLS on all tables
 ALTER TABLE public.admins ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.weddings ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.guests ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.provinces ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.districts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.communes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.villages ENABLE ROW LEVEL SECURITY;
 
--- Since this is a prototype, we create permissive public policies 
--- to allow easy access from the client-side without complex authentication setup.
+CREATE POLICY "Enable read/write bypass for prototype admins" ON public.admins FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable read/write bypass for prototype provinces" ON public.provinces FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable read/write bypass for prototype districts" ON public.districts FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable read/write bypass for prototype communes" ON public.communes FOR ALL USING (true) WITH CHECK (true);
+CREATE POLICY "Enable read/write bypass for prototype villages" ON public.villages FOR ALL USING (true) WITH CHECK (true);
 
--- Policies for 'admins'
-CREATE POLICY "Enable read/write bypass for prototype admins" ON public.admins 
-    FOR ALL USING (true) WITH CHECK (true);
+-- Notify PostgREST to reload schema
+NOTIFY pgrst, 'reload schema';
 
--- Policies for 'weddings'
-CREATE POLICY "Enable read/write bypass for prototype weddings" ON public.weddings 
-    FOR ALL USING (true) WITH CHECK (true);
 
--- Policies for 'guests'
-CREATE POLICY "Enable read/write bypass for prototype guests" ON public.guests 
-    FOR ALL USING (true) WITH CHECK (true);
+-- =====================================================================
+-- SAFE MIGRATION SCRIPT FOR EXISTING DATABASES (NO DATA LOSS)
+-- =====================================================================
+-- Run this if you already have weddings and guests tables with data!
 
--- Policies for Cambodia Address Lookup Tables
-CREATE POLICY "Enable read/write bypass for prototype provinces" ON public.provinces 
-    FOR ALL USING (true) WITH CHECK (true);
+/*
+-- 1. Create Lookup Tables safely if they do not exist
+CREATE TABLE IF NOT EXISTS public.provinces (
+    id VARCHAR(10) PRIMARY KEY,
+    code VARCHAR(10) NOT NULL,
+    name_km VARCHAR(255) NOT NULL,
+    name_en VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
-CREATE POLICY "Enable read/write bypass for prototype districts" ON public.districts 
-    FOR ALL USING (true) WITH CHECK (true);
+CREATE TABLE IF NOT EXISTS public.districts (
+    id VARCHAR(10) PRIMARY KEY,
+    province_id VARCHAR(10) REFERENCES public.provinces(id) ON DELETE CASCADE NOT NULL,
+    code VARCHAR(10) NOT NULL,
+    name_km VARCHAR(255) NOT NULL,
+    name_en VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
-CREATE POLICY "Enable read/write bypass for prototype communes" ON public.communes 
-    FOR ALL USING (true) WITH CHECK (true);
+CREATE TABLE IF NOT EXISTS public.communes (
+    id VARCHAR(10) PRIMARY KEY,
+    province_id VARCHAR(10) REFERENCES public.provinces(id) ON DELETE CASCADE,
+    district_id VARCHAR(10) REFERENCES public.districts(id) ON DELETE CASCADE NOT NULL,
+    code VARCHAR(10) NOT NULL,
+    name_km VARCHAR(255) NOT NULL,
+    name_en VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
 
-CREATE POLICY "Enable read/write bypass for prototype villages" ON public.villages 
-    FOR ALL USING (true) WITH CHECK (true);
+CREATE TABLE IF NOT EXISTS public.villages (
+    id VARCHAR(10) PRIMARY KEY,
+    province_id VARCHAR(10) REFERENCES public.provinces(id) ON DELETE CASCADE,
+    district_id VARCHAR(10) REFERENCES public.districts(id) ON DELETE CASCADE,
+    commune_id VARCHAR(10) REFERENCES public.communes(id) ON DELETE CASCADE NOT NULL,
+    code VARCHAR(10) NOT NULL,
+    name_km VARCHAR(255) NOT NULL,
+    name_en VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- 2. Safely add missing columns to 'guests' and 'weddings' tables if they don't exist yet
+ALTER TABLE public.weddings ADD COLUMN IF NOT EXISTS khqr_usd_img_url TEXT;
+ALTER TABLE public.weddings ADD COLUMN IF NOT EXISTS user_id UUID REFERENCES auth.users(id);
+
+-- 3. Update Policy for Wedding Tables
+ALTER TABLE public.weddings ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone can read weddings" ON public.weddings;
+CREATE POLICY "Anyone can read weddings" ON public.weddings FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Users can manage their own weddings" ON public.weddings;
+CREATE POLICY "Users can manage their own weddings" ON public.weddings FOR ALL USING (auth.uid() = user_id);
+
+-- 4. Update Policy for Guests Tables
+ALTER TABLE public.guests ENABLE ROW LEVEL SECURITY;
+DROP POLICY IF EXISTS "Anyone can insert guests" ON public.guests;
+CREATE POLICY "Anyone can insert guests" ON public.guests FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Users can manage guests for their weddings" ON public.guests;
+CREATE POLICY "Users can manage guests for their weddings" ON public.guests
+    FOR ALL USING (
+        EXISTS (
+            SELECT 1 FROM public.weddings
+            WHERE weddings.id = guests.wedding_id
+            AND weddings.user_id = auth.uid()
+        )
+    );
+
+ALTER TABLE public.provinces ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.districts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.communes ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.villages ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Enable read/write bypass for prototype provinces" ON public.provinces;
+CREATE POLICY "Enable read/write bypass for prototype provinces" ON public.provinces FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Enable read/write bypass for prototype districts" ON public.districts;
+CREATE POLICY "Enable read/write bypass for prototype districts" ON public.districts FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Enable read/write bypass for prototype communes" ON public.communes;
+CREATE POLICY "Enable read/write bypass for prototype communes" ON public.communes FOR ALL USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Enable read/write bypass for prototype villages" ON public.villages;
+CREATE POLICY "Enable read/write bypass for prototype villages" ON public.villages FOR ALL USING (true) WITH CHECK (true);
+
+NOTIFY pgrst, 'reload schema';
+*/
