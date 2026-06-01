@@ -31,7 +31,8 @@ import {
   Scan,
   Send,
   Eye,
-  EyeOff
+  EyeOff,
+  Unlock
 } from 'lucide-react';
 import { createClient } from '@supabase/supabase-js';
 import * as XLSX from 'xlsx';
@@ -387,8 +388,8 @@ export default function App() {
   const [isInitializingDb, setIsInitializingDb] = useState(false);
 
   // Active User Role state
-  // Roles: 'guest' | 'admin' | 'host'
-  const [currentRole, setCurrentRole] = useState<'guest' | 'admin' | 'host'>('guest');
+  // Roles: 'guest' | 'dashboard'
+  const [currentRole, setCurrentRole] = useState<'guest' | 'dashboard'>('guest');
 
   // Supabase Client state
   const [supabaseClient, setSupabaseClient] = useState<any>(null);
@@ -411,6 +412,14 @@ export default function App() {
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+
+  // Prototype SaaS Mock States
+  const [isDashboardLoggedIn, setIsDashboardLoggedIn] = useState(false);
+  const [hasPaidPlan, setHasPaidPlan] = useState(false);
+  const [dashboardAuthEmail, setDashboardAuthEmail] = useState('');
+  const [dashboardAuthPass, setDashboardAuthPass] = useState('');
+  const [isDashboardRegistering, setIsDashboardRegistering] = useState(false);
+  const [showDashboardPassword, setShowDashboardPassword] = useState(false);
 
   const [hostUsername, setHostUsername] = useState('');
   const [hostPassword, setHostPassword] = useState('');
@@ -1061,6 +1070,23 @@ export default function App() {
   }, [saasSession, connectionMode, supabaseClient]);
 
   // SaaS Auth Handlers
+  const handleGoogleAuth = async () => {
+    if (!supabaseClient) return;
+    setAuthProcessing(true);
+    try {
+      const { error } = await supabaseClient.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: window.location.origin,
+        }
+      });
+      if (error) throw error;
+    } catch (err: any) {
+      setAuthProcessing(false);
+      showNotification(err.message, 'error');
+    }
+  };
+
   const handleSaaSAuth = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!supabaseClient) return;
@@ -1122,7 +1148,7 @@ export default function App() {
   };
 
   // Switch role action helper
-  const handleRoleSwitch = (role: 'guest' | 'admin' | 'host') => {
+  const handleRoleSwitch = (role: 'guest' | 'dashboard') => {
     setCurrentRole(role);
     setSearchQuery('');
     setRelationFilter('ទាំងអស់');
@@ -1341,7 +1367,7 @@ export default function App() {
           const updatedWeddings = [...weddings, addedW];
           setWeddings(updatedWeddings);
           setSelectedWeddingId(addedW.id);
-          if (currentRole === 'host') {
+          if (currentRole === 'dashboard') {
             setLoggedInHostWeddingId(addedW.id);
             setHostUsername(addedW.host_username);
           }
@@ -1352,7 +1378,7 @@ export default function App() {
             setWeddings(refreshed);
             if (refreshed.length > 0) {
               setSelectedWeddingId(refreshed[0].id);
-              if (currentRole === 'host') {
+              if (currentRole === 'dashboard') {
                  setLoggedInHostWeddingId(refreshed[0].id);
                  setHostUsername(refreshed[0].host_username);
               }
@@ -1370,7 +1396,7 @@ export default function App() {
         setWeddings(updated);
         setSelectedWeddingId(localW.id);
         syncLocalData(updated, guests);
-        if (currentRole === 'host') {
+        if (currentRole === 'dashboard') {
           setLoggedInHostWeddingId(localW.id);
           setHostUsername(localW.host_username);
         }
@@ -2155,7 +2181,7 @@ export default function App() {
 
   // FILTERED GUESTS FOR LIST (Used both in host and admin view)
   const filteredGuests = useMemo(() => {
-    const targetWeddingId = currentRole === 'host' ? (loggedInHostWeddingId || selectedWeddingId) : selectedWeddingId;
+    const targetWeddingId = selectedWeddingId;
     
     return guests.filter(g => {
       if (g.wedding_id !== targetWeddingId) return false;
@@ -2379,29 +2405,16 @@ export default function App() {
           </button>
           
           <button
-            onClick={() => handleRoleSwitch('admin')}
+            onClick={() => handleRoleSwitch('dashboard')}
             className={`px-4 py-2.5 md:py-2 text-[13px] md:text-sm font-bold rounded-xl transition-all duration-300 flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
-              currentRole === 'admin'
+              currentRole === 'dashboard'
                 ? 'bg-white text-rose-600 shadow-[0_2px_10px_rgb(0,0,0,0.06)]'
                 : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
             }`}
-            id="role-admin-view"
+            id="role-dashboard-view"
           >
             <UserCheck className="w-4 h-4" />
-            <span>អ្នកសម្របសម្រួល (Admin)</span>
-          </button>
-          
-          <button
-            onClick={() => handleRoleSwitch('host')}
-            className={`px-4 py-2.5 md:py-2 text-[13px] md:text-sm font-bold rounded-xl transition-all duration-300 flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
-              currentRole === 'host'
-                ? 'bg-white text-rose-600 shadow-[0_2px_10px_rgb(0,0,0,0.06)]'
-                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
-            }`}
-            id="role-host-view"
-          >
-            <Users className="w-4 h-4" />
-            <span>ម្ចាស់កម្មវិធី (Host)</span>
+            <span>អ្នកគ្រប់គ្រង (Dashboard)</span>
           </button>
 
           {connectionMode === 'supabase' && saasSession && currentRole !== 'guest' && (
@@ -2501,6 +2514,28 @@ export default function App() {
               >
                 {authProcessing ? 'កំពុងដំណើរការ...' : isLoginMode ? 'ចូលប្រព័ន្ធ (Login)' : 'បង្កើតគណនី (Sign Up)'}
               </button>
+
+              {!isLoginMode && (
+                <div className="mt-4">
+                  <div className="relative">
+                    <div className="absolute inset-0 flex items-center">
+                      <div className="w-full border-t border-slate-200"></div>
+                    </div>
+                    <div className="relative flex justify-center text-sm">
+                      <span className="px-2 bg-white text-slate-500">ឬ (Or)</span>
+                    </div>
+                  </div>
+
+                  <button
+                    type="button"
+                    onClick={handleGoogleAuth}
+                    disabled={authProcessing}
+                    className="w-full mt-4 flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-bold rounded-xl py-3.5 transition disabled:opacity-50"
+                  >
+                    ភ្ជាប់ជាមួយ Gmail (Google)
+                  </button>
+                </div>
+              )}
             </form>
             
             <div className="mt-6 text-center">
@@ -3272,77 +3307,210 @@ export default function App() {
         )}
 
         {/* ========================================================================= */}
-        {/* 3. HOST VIEW (Wedding Owner/Bride & Groom) */}
+        {/* 3. DASHBOARD VIEW (Wedding Owner/Bride & Groom) */}
         {/* ========================================================================= */}
-        {currentRole === 'host' && (
+        {currentRole === 'dashboard' && (
           <div className="space-y-6">
-            {!loggedInHostWeddingId ? (
-              /* Host Login Card */
-              <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 max-w-md mx-auto">
-                <div className="flex flex-col items-center mb-6">
-                  <div className="p-3.5 bg-pink-50 text-wedding-600 rounded-full mb-2">
-                    <Heart className="w-6 h-6 fill-wedding-600" />
-                  </div>
-                  <h3 className="text-lg font-bold text-slate-800">ផ្ទៀងផ្ទាត់គណនី ម្ចាស់កម្មវិធី</h3>
-                  <p className="text-slate-400 text-xs mt-1 text-center">សូមបំពេញព័ត៌មានខាងក្រោម ដែលបានកំណត់ដោយ Admin Coordinator។</p>
-                </div>
-
-                <form onSubmit={handleHostLogin} className="space-y-4">
-                  <div>
-                    <label className="block text-slate-700 text-xs font-semibold mb-1">ឈ្មោះគណនីម្ចាស់ការ (Host Username)</label>
-                    <input
-                      type="text"
-                      placeholder="ចម្លង៖ wedding123"
-                      value={hostUsername}
-                      onChange={(e) => setHostUsername(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 text-xs focus:ring-2 focus:ring-wedding-500 focus:outline-none transition-all"
-                      id="inp-host-user"
-                      required
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-slate-700 text-xs font-semibold mb-1">លេខសម្ងាត់ម្ចាស់ការ (Host Password)</label>
-                    <input
-                      type="password"
-                      placeholder="ចម្លង៖ password123"
-                      value={hostPassword}
-                      onChange={(e) => setHostPassword(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-slate-800 text-xs focus:ring-2 focus:ring-wedding-500 focus:outline-none transition-all"
-                      id="inp-host-pass"
-                      required
-                    />
-                  </div>
-
-                  <button
-                    type="submit"
-                    className="w-full py-3.5 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-bold rounded-xl text-xs md:text-sm transition duration-300 shadow-[0_8px_20px_rgb(244,63,94,0.3)] cursor-pointer active:scale-[0.98]"
-                    id="btn-host-login-submit"
-                  >
-                    ចូលពិនិត្យរបាយការណ៍
-                  </button>
-
-                  <div className="mt-5 border-t border-slate-100 pt-5 flex flex-col space-y-3 items-center">
-                    <div className="flex flex-col items-center space-y-1">
-                      <span className="text-xs text-slate-500">មិនទាន់មានគណនីមែនទេ?</span>
-                      <button
-                        type="button"
-                        onClick={() => setShowAddWeddingModal(true)}
-                        className="text-xs font-bold text-wedding-600 hover:text-wedding-700 underline cursor-pointer transition-colors"
+            {!isDashboardLoggedIn ? (
+               <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 max-w-md mx-auto mt-6 animate-fade-in relative overflow-hidden">
+                 <div className="absolute top-0 right-0 p-4 opacity-10">
+                   <Database className="w-32 h-32 text-rose-500" />
+                 </div>
+                 <div className="text-center mb-8 relative z-10">
+                   <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-3xl flex items-center justify-center mx-auto mb-4 border border-rose-100/50 shadow-sm">
+                     <Database className="w-8 h-8" />
+                   </div>
+                   <h2 className="text-2xl font-bold text-slate-800 tracking-tight">
+                     {isDashboardRegistering ? 'បង្កើតគណនីថ្មី (Sign Up)' : 'ប្រព័ន្ធអ្នកគ្រប់គ្រង (Admin)'}
+                   </h2>
+                   <p className="text-sm text-slate-500 mt-2">
+                     {isDashboardRegistering ? 'ចុះឈ្មោះតាមរយៈ Gmail ដើម្បីប្រើប្រាស់កម្មវិធី' : 'សូមបញ្ចូលគណនីដើម្បីគ្រប់គ្រងទិន្នន័យ (Cloud Sync)'}
+                   </p>
+                 </div>
+                 
+                 {isDashboardRegistering ? (
+                    <div className="space-y-4 relative z-10 mt-6 animate-fade-in">
+                      <button 
+                        onClick={() => {
+                          setIsDashboardRegistering(false);
+                          showNotification('ចុះឈ្មោះតាមរយៈ Gmail ជោគជ័យ សូមចូលប្រើគណនី!', 'success');
+                        }}
+                        className="w-full py-3.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 font-bold rounded-xl shadow-sm transition-all text-sm flex items-center justify-center space-x-3 cursor-pointer active:scale-[0.98]"
                       >
-                        ចុះឈ្មោះបង្កើតកម្មវិធីថ្មីនៅទីនេះ
+                       <svg className="w-5 h-5" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                          <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/>
+                          <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853"/>
+                          <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05"/>
+                          <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335"/>
+                        </svg>
+                        <span>Sign up with Google (Gmail)</span>
                       </button>
+                      
+                      <div className="flex items-center space-x-3 my-5">
+                        <div className="flex-1 h-px bg-slate-100"></div>
+                        <span className="text-xs text-slate-400 font-medium">ឬ</span>
+                        <div className="flex-1 h-px bg-slate-100"></div>
+                      </div>
+
+                      <div className="text-center pt-2">
+                        <p className="text-xs text-slate-500">
+                          មានគណនីរួចហើយ?{' '}
+                          <button type="button" onClick={() => setIsDashboardRegistering(false)} className="text-rose-600 font-bold hover:underline cursor-pointer">
+                            ចូលគណនី (Log In)
+                          </button>
+                        </p>
+                      </div>
                     </div>
-                    <div className="text-[11px] text-slate-400 mt-2">
-                      * គណនីសាកល្បង៖ <strong className="text-slate-600 font-mono">wedding123</strong> / <strong className="text-slate-600 font-mono">password123</strong>
-                    </div>
-                  </div>
-                </form>
-              </div>
+                 ) : (
+                 <form onSubmit={(e) => { e.preventDefault(); setIsDashboardLoggedIn(true); showNotification('ចូលគណនីជោគជ័យ!', 'success'); }} className="space-y-4 relative z-10 mt-6 animate-fade-in">
+                   <div>
+                     <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">ឈ្មោះគណនី (Username) / អ៊ីមែល</label>
+                     <input type="text" placeholder="admin@gmail.com ឫ admin" value={dashboardAuthEmail} onChange={(e) => setDashboardAuthEmail(e.target.value)} className="w-full bg-slate-50/50 border border-slate-200 rounded-xl px-4 py-3.5 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all placeholder:text-slate-400" required />
+                   </div>
+                   <div className="relative">
+                     <label className="block text-xs font-bold text-slate-700 mb-1.5 uppercase tracking-wide">លេខសម្ងាត់ (Password)</label>
+                     <input type={showDashboardPassword ? "text" : "password"} placeholder="បញ្ចូលលេខសម្ងាត់" value={dashboardAuthPass} onChange={(e) => setDashboardAuthPass(e.target.value)} className="w-full bg-slate-50/50 border border-slate-200 rounded-xl pl-4 pr-12 py-3.5 text-sm focus:ring-2 focus:ring-rose-500 focus:border-rose-500 outline-none transition-all placeholder:text-slate-400" required />
+                     <button type="button" onClick={() => setShowDashboardPassword(!showDashboardPassword)} className="absolute right-3 top-[34px] text-slate-400 hover:text-slate-600 p-1 cursor-pointer transition-colors">
+                       {showDashboardPassword ? <EyeOff className="w-[18px] h-[18px]" /> : <Eye className="w-[18px] h-[18px]" />}
+                     </button>
+                   </div>
+                   <button type="submit" className="w-full mt-2 py-3.5 bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white font-bold rounded-xl shadow-[0_8px_20px_rgb(244,63,94,0.25)] cursor-pointer active:scale-[0.98] transition-all text-sm">ចូលប្រើប្រាស់គណនី</button>
+                   
+                   <div className="text-center mt-5 space-y-3">
+                     <div className="flex items-center justify-center space-x-1 text-xs text-slate-500 pt-2 border-t border-slate-100">
+                        <span>មិនទាន់មានគណនី?</span>
+                        <button type="button" onClick={() => setIsDashboardRegistering(true)} className="text-rose-600 font-bold hover:underline cursor-pointer">
+                          ចុះឈ្មោះថ្មី (Sign Up)
+                        </button>
+                     </div>
+                     <p className="text-[11px] text-slate-400">ប្រើ <span className="font-mono text-slate-600 font-semibold bg-slate-100 px-1 py-0.5 rounded">admin</span> និង <span className="font-mono text-slate-600 font-semibold bg-slate-100 px-1 py-0.5 rounded">admin</span> សាកល្បង</p>
+                   </div>
+                 </form>
+                 )}
+               </div>
+            ) : !hasPaidPlan ? (
+               <div className="bg-white rounded-[2rem] border border-slate-100 shadow-[0_8px_40px_rgb(0,0,0,0.04)] p-8 max-w-4xl mx-auto mt-6 text-center animate-fade-in relative overflow-hidden">
+                 
+                 <div className="inline-flex items-center space-x-2 bg-rose-50 text-rose-600 px-4 py-1.5 rounded-full text-xs font-bold uppercase tracking-wider mb-6 border border-rose-100/50">
+                    <CheckCircle className="w-4 h-4" />
+                    <span>គម្រោងប្រចាំឆ្នាំ (Annual Plans)</span>
+                 </div>
+                 
+                 <h2 className="text-3xl tracking-tight font-extrabold text-slate-900 mb-4">ជ្រើសរើសកញ្ចប់តម្លៃដែលសាកសម</h2>
+                 <p className="text-slate-500 mb-10 max-w-lg mx-auto text-[15px] leading-relaxed">បង្កើនគុណភាពនៃការគ្រប់គ្រងលើការរៀបចំពិធីមង្គលការ ឬព្រឹត្តិការណ៍របស់អ្នកកាន់តែទំនើប សុវត្ថិភាព និងចំណេញពេលវេលាជាងមុន។</p>
+                 
+                 <div className="grid md:grid-cols-2 gap-6 xl:gap-8 max-w-3xl mx-auto text-left relative">
+                   
+                   {/* Free/Basic Plan */}
+                   <div className="border border-slate-200 rounded-3xl p-8 hover:border-slate-300 hover:shadow-lg transition-all duration-300 md:translate-y-4 md:scale-95 bg-white relative z-0 flex flex-col group">
+                      <h3 className="text-xl font-bold tracking-tight text-slate-800">កញ្ចប់សាកល្បង (Basic)</h3>
+                      <p className="text-xs text-slate-500 mt-1">សម្រាប់កម្មវិធីតូចតាច លក្ខណៈគ្រួសារ</p>
+                      <div className="mt-6 flex items-baseline">
+                        <span className="text-4xl font-extrabold tracking-tight text-slate-900">$0</span>
+                        <span className="text-sm font-medium text-slate-500 ml-1">/ កម្មវិធី</span>
+                      </div>
+                      
+                      <div className="my-8 h-px bg-slate-100 w-full" />
+                      
+                      <ul className="mb-8 space-y-4 flex-1 text-sm text-slate-600">
+                        <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"/> <span>មុខងារទាញយកបញ្ជីភ្ញៀវចូលតុ</span></li>
+                        <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"/> <span>កំណត់ចំណងជើងកម្មវិធីបាន 1</span></li>
+                        <li className="flex gap-3 items-start opacity-60"><Lock className="w-5 h-5 text-slate-400 shrink-0 mt-0.5"/> <span>គ្មានមុខងារស្កេន QR Code ចុះឈ្មោះ</span></li>
+                        <li className="flex gap-3 items-start opacity-60"><Lock className="w-5 h-5 text-slate-400 shrink-0 mt-0.5"/> <span>គ្មានទិន្នន័យចំណងដៃ (Gift Analytics)</span></li>
+                      </ul>
+                      
+                      <button onClick={() => setHasPaidPlan(true)} className="mt-auto py-3.5 rounded-xl border border-slate-200 font-bold text-slate-700 hover:bg-slate-50 transition-colors w-full cursor-pointer">ជ្រើសរើស Basic ដោយឥតគិតថ្លៃ</button>
+                   </div>
+                   
+                   {/* Premium SaaS Plan */}
+                   <div className="border-2 border-rose-500 bg-rose-50/10 rounded-3xl p-8 shadow-[0_8px_30px_rgb(244,63,94,0.12)] flex flex-col relative z-10 transform scale-100 origin-bottom bg-white overflow-hidden">
+                      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-pink-500 via-rose-500 to-rose-600"></div>
+                      <div className="absolute top-0 right-0 bg-rose-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider shadow-sm">សំណព្វចិត្ត (Popular)</div>
+                      
+                      <div className="flex items-center space-x-2 mt-2">
+                        <h3 className="text-xl font-extrabold tracking-tight text-rose-600">Premium Pro</h3>
+                        <span className="flex w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+                      </div>
+                      <p className="text-xs text-slate-500 mt-1">ដោះសោរគ្រប់មុខងារជាន់ខ្ពស់ទាំងអស់</p>
+                      
+                      <div className="mt-6 flex items-baseline">
+                        <span className="text-4xl font-extrabold tracking-tight text-slate-900">$29</span>
+                        <span className="text-sm font-medium text-slate-500 ml-1">/ កម្មវិធី</span>
+                      </div>
+                      
+                      <div className="my-8 h-px bg-rose-100 w-full" />
+                      
+                      <ul className="mb-8 space-y-4 flex-1 text-sm text-slate-700 font-medium">
+                        <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5"/> <span>ទិន្នន័យបញ្ជីឈ្មោះ និងកត់ចំនងដៃគ្មានកំណត់</span></li>
+                        <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5"/> <span><strong>មុខងារស្កេន QR Code ចុះឈ្មោះចូលតុស្វ័យប្រវត្ត</strong></span></li>
+                        <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5"/> <span>របាយការណ៍ហិរញ្ញវត្ថុ (Analytics Dashboards)</span></li>
+                        <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5"/> <span>តភ្ជាប់ Telegram Bot ផ្ញើដំណឹងរាល់ការ Check-in</span></li>
+                      </ul>
+                      
+                      <button onClick={() => { setHasPaidPlan(true); showNotification('អបអរសាទរ! គណនីរបស់អ្នកបានក្លាយជា Premium!', 'success'); }} className="mt-auto py-3.5 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white shadow-lg font-bold hover:-translate-y-0.5 transition-all w-full cursor-pointer flex items-center justify-center space-x-2">
+                        <Unlock className="w-4 h-4" />
+                        <span>អាប់ហ្គ្រេតគម្រោងរបស់ខ្ញុំ (Upgrade)</span>
+                      </button>
+                   </div>
+                   
+                 </div>
+                 
+                 <div className="mt-8 pt-6 border-t border-slate-100 max-w-xl mx-auto flex items-center justify-center space-x-4">
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Mastercard_logo.svg/1200px-Mastercard_logo.svg.png" className="h-6" alt="Mastercard" />
+                    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Former_Visa_%28company%29_logo.svg/1280px-Former_Visa_%28company%29_logo.svg.png" className="h-6" alt="Visa" />
+                    <div className="h-6 w-px bg-slate-300"></div>
+                    <span className="text-[11px] text-slate-400 font-medium">ទូទាត់មានសុវត្ថិភាពខ្ពស់ដោយ Stripe</span>
+                 </div>
+               </div>
             ) : (
-              /* Host Detailed Dashboard and Analytics */
-              <div className="space-y-6 animate-fade-in">
-                
+            <div className="space-y-6 animate-fade-in">
+              
+              {/* Event Selector & Toolbar */}
+              <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-5 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div>
+                    <label className="block text-[11px] text-slate-400 mb-1 uppercase font-semibold">ជ្រើសរើសកម្មវិធីជាក់ស្តែង</label>
+                    <select
+                      value={selectedWeddingId}
+                      onChange={(e) => {
+                        setSelectedWeddingId(e.target.value);
+                      }}
+                      className="bg-slate-50 border border-slate-200 rounded-xl px-3 py-2 text-slate-800 font-medium focus:outline-none text-xs cursor-pointer min-w-[200px]"
+                      id="sel-wedding-admin"
+                    >
+                      {weddings.length === 0 && <option value="">សូមបង្កើតកម្មវិធីថ្មី...</option>}
+                      {weddings.map((w) => (
+                        <option key={w.id} value={w.id}>{w.title}</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  <div className="self-end flex items-center gap-2">
+                    <button
+                      onClick={() => setShowAddWeddingModal(true)}
+                      className="bg-wedding-50 hover:bg-wedding-100 border border-wedding-200 text-wedding-700 font-semibold py-2 px-3 rounded-xl text-xs transition flex items-center space-x-1 cursor-pointer"
+                      id="btn-add-wedding-modal"
+                    >
+                      <Plus className="w-4 h-4" />
+                      <span>បង្កើតកម្មវិធីថ្មី</span>
+                    </button>
+                    
+                    {selectedWeddingId && (
+                      <button
+                        onClick={() => handleDeleteWedding(selectedWeddingId)}
+                        className="bg-rose-50 hover:bg-rose-100 border border-rose-200 text-rose-600 font-semibold py-2 px-3 rounded-xl text-xs transition flex items-center space-x-1 cursor-pointer ml-auto"
+                        title="លុបកម្មវិធីនេះ"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                        <span>លុបកម្មវិធីនេះ</span>
+                      </button>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {selectedWeddingId && (
+                <>
                 {/* Host Title & Header */}
                 <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 md:p-8 flex flex-col md:flex-row md:items-center justify-between gap-4 transition-all">
                   <div>
@@ -3766,8 +3934,10 @@ ALTER TABLE weddings ADD COLUMN telegram_chat_id TEXT;`}
                 </div>
 
 
-              </div>
-            )}
+                </>
+              )}
+            </div>
+           )}
           </div>
         )}
           </>
