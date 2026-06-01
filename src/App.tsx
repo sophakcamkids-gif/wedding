@@ -23,6 +23,7 @@ import {
   Check, 
   Loader2,
   ChevronRight,
+  ChevronDown,
   Sparkles,
   Info,
   MapPin,
@@ -411,12 +412,13 @@ export default function App() {
 
   // ACLEDA Mobile HUD integrations status
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [mobileActiveView, setMobileActiveView] = useState<'home' | 'register' | 'list' | 'scan' | 'khqr' | 'telegram' | 'supabase_settings' | 'bonds' | 'mobile_auth'>('home');
+  const [mobileActiveView, setMobileActiveView] = useState<'home' | 'register' | 'list' | 'scan' | 'khqr' | 'telegram' | 'supabase_settings' | 'bonds' | 'mobile_auth' | 'dashboard'>('home');
   const [mobileTime, setMobileTime] = useState('16:37');
   const [mobilePopup, setMobilePopup] = useState<'invite' | 'bridegroom' | 'food' | 'gallery' | 'blessing' | null>(null);
   const [customBlessingText, setCustomBlessingText] = useState('');
   const [customBlessingSender, setCustomBlessingSender] = useState('');
   const [mobileRegisterTab, setMobileRegisterTab] = useState<'form' | 'qrcode'>('form');
+  const [mobileDashboardTab, setMobileDashboardTab] = useState<'overview' | 'add_guest' | 'event_config'>('overview');
 
   useEffect(() => {
     const handleResize = () => {
@@ -467,6 +469,16 @@ export default function App() {
   const [hasPaidPlan, setHasPaidPlan] = useState(() => {
     return localStorage.getItem('wedding_manager_has_paid_plan') === 'true';
   });
+  const [selectedPlanType, setSelectedPlanType] = useState<'trial' | 'premium' | null>(() => {
+    return (localStorage.getItem('wedding_manager_selected_plan_type') as 'trial' | 'premium') || null;
+  });
+
+  const selectPlan = (plan: 'trial' | 'premium') => {
+    setSelectedPlanType(plan);
+    setHasPaidPlan(true);
+    localStorage.setItem('wedding_manager_has_paid_plan', 'true');
+    localStorage.setItem('wedding_manager_selected_plan_type', plan);
+  };
   const [dashboardAuthEmail, setDashboardAuthEmail] = useState('');
   const [dashboardAuthPass, setDashboardAuthPass] = useState('');
   const [isDashboardRegistering, setIsDashboardRegistering] = useState(() => {
@@ -1291,6 +1303,11 @@ export default function App() {
       showNotification('សូមជ្រើសរើសកម្មវិធីជាមុនសិន!', 'error');
       return;
     }
+    const currentWeddingGuestsCount = guests.filter(g => g.wedding_id === selectedWeddingId).length;
+    if (selectedPlanType === 'trial' && currentWeddingGuestsCount >= 100) {
+      showNotification('បរាជ័យ៖ កញ្ចប់សាកល្បង (Trial Plan) អាចចុះឈ្មោះភ្ញៀវបានត្រឹម ១០០ នាក់ប៉ុណ្ណោះ! សូមទាក់ទងម្ចាស់ការដើម្បីអាប់ហ្គ្រេតជា Premium Pro ($14.99)។', 'error');
+      return;
+    }
     if (!guestName.trim()) {
       showNotification('សូមបំពេញឈ្មោះរបស់អ្នក!', 'error');
       return;
@@ -1451,6 +1468,10 @@ export default function App() {
   // ADMIN CREATE WEDDING EVENT
   const handleCreateWedding = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (selectedPlanType === 'trial' && weddings.length >= 1) {
+      showNotification('កញ្ចប់សាកល្បង (Trial Plan) អាចបង្កើតបានតែ ១ កម្មវិធីប៉ុណ្ណោះ! សូមអាប់ហ្គ្រេតទៅ Premium Pro ($14.99) ដើម្បីបង្កើតកម្មវិធីមិនកំណត់។', 'error');
+      return;
+    }
     if (!newWeddingTitle.trim() || !newWeddingHostUser.trim() || !newWeddingHostPass.trim() || !newWeddingKhqrUrl.trim()) {
       showNotification('សូមបំពេញព័ត៌មានឱ្យបានគ្រប់គ្រាន់ទាំងអស់!', 'error');
       return;
@@ -1545,17 +1566,20 @@ export default function App() {
       setShowAddWeddingModal(false);
     } catch (err: any) {
       console.error("Wedding insert error:", err);
-      alert(`Error detail: ${err.message || err.toString()}`);
-      if (err.message && err.message.includes("violates row-level security policy")) {
-        showNotification(`បរាជ័យ (RLS Policy)៖ សូមដំណើរការកូដ "ផ្នែកទី ១" នៅក្នុង Supabase សិនទើបអាចបង្កើតបាន`, 'error');
-      } else if (err.message && err.message.includes("khqr_usd_img_url")) {
-        showNotification(`សូមដំណើរការកូដ "ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់)" ក្នុង Supabase សិន ដើម្បីអាចទាក់ទង QR ដុល្លារបាន!`, 'error');
-      } else if (err.message && err.message.includes("column")) {
-        showNotification(`បរាជ័យ៖ Database របស់អ្នកចាស់ពេក! សូមដំណើរការកូដ "ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់)" ក្នុង Supabase សិន។`, 'error');
-      } else if (err.message && err.message.includes("id")) {
-        showNotification(`បរាជ័យ៖ តារាង weddings របស់អ្នកមិនមាន default gen_random_uuid() ទេ។ សូមដំណើរការផ្នែកទី១ឡើងវិញ`, 'error');
+      const errMsg = err.message || err.toString() || "";
+      if (errMsg.includes("weddings_host_username_key") || errMsg.includes("duplicate key")) {
+        showNotification("បរាជ័យ៖ ឈ្មោះគណនី (Username) នេះមានរួចហើយ! សូមប្តូរឈ្មោះគណនីម្ចាស់ការផ្សេង។", "error");
+      } else if (errMsg.includes("violates row-level security policy")) {
+        showNotification("បរាជ័យ (RLS Policy)៖ សូមដំណើរការកូដ \"ផ្នែកទី ១\" នៅក្នុង Supabase សិនទើបអាចបង្កើតបាន", "error");
+      } else if (errMsg.includes("khqr_usd_img_url")) {
+        showNotification("សូមដំណើរការកូដ \"ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់)\" ក្នុង Supabase សិន ដើម្បីអាចទាក់ទង QR ដុល្លារបាន!", "error");
+      } else if (errMsg.includes("column")) {
+        showNotification("បរាជ័យ៖ Database របស់អ្នកចាស់ពេក! សូមដំណើរការកូដ \"ផ្នែកទី ១ (រក្សាទិន្នន័យចាស់)\" ក្នុង Supabase សិន។", "error");
+      } else if (errMsg.includes("id")) {
+        showNotification("បរាជ័យ៖ តារាង weddings របស់អ្នកមិនមាន default gen_random_uuid() ទេ។ សូមដំណើរការផ្នែកទី១ឡើងវិញ", "error");
       } else {
-        showNotification(`ការបង្កើតបរាជ័យ៖ ${err.message || err}`, 'error');
+        alert(`Error detail: ${errMsg}`);
+        showNotification(`ការបង្កើតបរាជ័យ៖ ${errMsg}`, "error");
       }
     }
   };
@@ -1595,6 +1619,11 @@ export default function App() {
     e.preventDefault();
     if (!selectedWeddingId) {
       showNotification('សូមជ្រើសរើសកម្មវិធីជាមុនសិន!', 'error');
+      return;
+    }
+    const currentWeddingGuestsCount = guests.filter(g => g.wedding_id === selectedWeddingId).length;
+    if (selectedPlanType === 'trial' && currentWeddingGuestsCount >= 100) {
+      showNotification('បរាជ័យ៖ កញ្ចប់សាកល្បង (Trial Plan) នេះអាចបន្ថែមភ្ញៀវបានត្រឹម ១០០ នាក់ប៉ុណ្ណោះ! សូមអាប់ហ្គ្រេតទៅគម្រោង Premium Pro ($14.99) ដើម្បីបន្ថែមគ្មានកំណត់។', 'error');
       return;
     }
     if (!manualGuestName.trim() || !manualGuestPhone.trim()) {
@@ -2510,10 +2539,12 @@ export default function App() {
                   if (nextRole === 'dashboard') {
                     ensureSaasActive(() => {
                       setCurrentRole('dashboard');
+                      setMobileActiveView('dashboard');
                       showNotification('បានប្តូរទៅកាន់ផ្ទាំងគ្រប់គ្រង (Dashboard)', 'success');
                     });
                   } else {
                     setCurrentRole('guest');
+                    setMobileActiveView('home');
                     showNotification('បានប្តូរទៅកាន់ទំព័រភ្ញៀវ (Guest View)', 'success');
                   }
                 }}
@@ -2623,7 +2654,8 @@ export default function App() {
                   onClick={() => {
                     ensureSaasActive(() => {
                       setCurrentRole('dashboard');
-                      showNotification('សូមចូលគណនីរបស់អ្នកដើម្បីគ្រប់គ្រងកម្មវិធី!', 'info');
+                      setMobileActiveView('dashboard');
+                      showNotification('ផ្ទាំងគ្រប់គ្រងត្រូវបានបើក!', 'success');
                     });
                   }}
                   className="flex flex-col items-center justify-center py-7 px-2 active:bg-[#112d4d]/80 transition text-center space-y-3"
@@ -3522,6 +3554,396 @@ export default function App() {
               className="mt-6 text-xs text-slate-400 hover:text-white"
             >
               ត្រលប់ទៅទំព័រដើមវិញ
+            </button>
+          </div>
+        )}
+
+        {/* ========================================= */}
+        {/* MOBILE DASHBOARD VIEW */}
+        {/* ========================================= */}
+        {mobileActiveView === 'dashboard' && (
+          <div className="flex-1 overflow-y-auto p-4.5 animate-fade-in text-slate-900 bg-slate-50 text-left">
+            <div className="flex items-center justify-between border-b border-rose-100 pb-3 mb-4 shrink-0">
+              <button 
+                onClick={() => setMobileActiveView('home')}
+                className="flex items-center space-x-1.5 text-rose-600 font-bold text-xs"
+              >
+                <ChevronLeft className="w-5 h-5" />
+                <span>ទំព័រដើម</span>
+              </button>
+              <h2 className="text-sm font-black text-slate-800">ផ្ទាំងគ្រប់គ្រងម្ចាស់ការ (Admin)</h2>
+              <div className="w-9 h-9"></div>
+            </div>
+
+            {/* DASHBOARD SUB-TAB SWITCHER */}
+            <div className="bg-slate-200/60 p-1 rounded-xl flex mb-4.5 text-[11px] font-bold border border-slate-200/20">
+              <button
+                type="button"
+                onClick={() => setMobileDashboardTab('overview')}
+                className={`flex-1 py-1.5 rounded-lg text-center transition ${
+                  mobileDashboardTab === 'overview' 
+                    ? 'bg-white text-slate-800 shadow-sm' 
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                📊 សង្ខេបកម្មវិធី
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileDashboardTab('add_guest')}
+                className={`flex-1 py-1.5 rounded-lg text-center transition ${
+                  mobileDashboardTab === 'add_guest' 
+                    ? 'bg-white text-slate-800 shadow-sm' 
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                ➕ បន្ថែមភ្ញៀវ
+              </button>
+              <button
+                type="button"
+                onClick={() => setMobileDashboardTab('event_config')}
+                className={`flex-1 py-1.5 rounded-lg text-center transition ${
+                  mobileDashboardTab === 'event_config' 
+                    ? 'bg-white text-slate-800 shadow-sm' 
+                    : 'text-slate-500 hover:text-slate-800'
+                }`}
+              >
+                ⚙️ ការកំណត់
+              </button>
+            </div>
+
+            {/* TAB CONTENT: OVERVIEW */}
+            {mobileDashboardTab === 'overview' && (
+              <div className="space-y-4 animate-fade-in">
+                {/* Active Wedding Selection Card */}
+                <div className="bg-white p-4.5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                  <span className="text-[10px] uppercase font-bold text-slate-400">ជ្រើសរើសកម្មវិធីសកម្ម</span>
+                  {weddings.length === 0 ? (
+                    <p className="text-xs text-amber-500 font-semibold">មិនទាន់មានកម្មវិធីរៀបចំមង្គលការនៅឡើយទេ!</p>
+                  ) : (
+                    <div className="relative">
+                      <select
+                        value={selectedWeddingId}
+                        onChange={(e) => setSelectedWeddingId(e.target.value)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4.5 py-3 text-xs text-slate-800 font-bold focus:outline-none focus:ring-1 focus:ring-rose-500 appearance-none cursor-pointer"
+                      >
+                        {weddings.map((w) => (
+                          <option key={w.id} value={w.id}>{w.title}</option>
+                        ))}
+                      </select>
+                      <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-500">
+                        <ChevronDown className="w-4 h-4" />
+                      </div>
+                    </div>
+                  )}
+
+                  {selectedWeddingId && (
+                    <button
+                      onClick={() => {
+                        if (confirm('តើអ្នកពិតជាចង់លុបមង្គលការនេះមែនទេ?')) {
+                          handleDeleteWedding(selectedWeddingId);
+                          showNotification('បានលុបកម្មវិធីជោគជ័យ!', 'success');
+                        }
+                      }}
+                      className="w-full py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold text-[11px] rounded-xl transition flex items-center justify-center space-x-1 border border-rose-100"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      <span>លុបកម្មវិធីសកម្មនេះ</span>
+                    </button>
+                  )}
+                </div>
+
+                {/* Create Wedding Event Trigger / Form */}
+                <details className="bg-white p-4.5 rounded-2xl border border-slate-100 shadow-sm space-y-3 group transition-all">
+                  <summary className="text-xs font-bold text-slate-700 cursor-pointer list-none flex justify-between items-center select-none">
+                    <span>➕ បង្កើតកម្មវិធីមង្គលការថ្មី</span>
+                    <ChevronDown className="w-4 h-4 text-slate-400 group-open:rotate-180 transition-transform duration-200" />
+                  </summary>
+                  
+                  <form onSubmit={handleCreateWedding} className="space-y-3 pt-3 text-xs">
+                    <div>
+                      <label className="block text-slate-600 font-bold mb-1">ឈ្មោះកម្មវិធី (ឧ. មង្គលការ លី សុខា) *</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={newWeddingTitle} 
+                        onChange={(e) => setNewWeddingTitle(e.target.value)} 
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800" 
+                        placeholder="ឈ្មោះមង្គលការ..." 
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-slate-600 font-bold mb-1">Username ម្ចាស់ការ *</label>
+                        <input 
+                          type="text" 
+                          required 
+                          value={newWeddingHostUser} 
+                          onChange={(e) => setNewWeddingHostUser(e.target.value)} 
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800" 
+                          placeholder="ឧ. host1" 
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-slate-600 font-bold mb-1">Password ម្ចាស់ការ *</label>
+                        <input 
+                          type="password" 
+                          required 
+                          value={newWeddingHostPass} 
+                          onChange={(e) => setNewWeddingHostPass(e.target.value)} 
+                          className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800" 
+                          placeholder="••••" 
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <label className="block text-slate-600 font-bold mb-1">KHQR Image URL (KHR) *</label>
+                      <input 
+                        type="text" 
+                        required 
+                        value={newWeddingKhqrUrl} 
+                        onChange={(e) => setNewWeddingKhqrUrl(e.target.value)} 
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 font-mono" 
+                        placeholder="https://..." 
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-slate-600 font-bold mb-1">KHQR Image URL (USD)</label>
+                      <input 
+                        type="text" 
+                        value={newWeddingKhqrUsdUrl} 
+                        onChange={(e) => setNewWeddingKhqrUsdUrl(e.target.value)} 
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 font-mono" 
+                        placeholder="https://... (Optional)" 
+                      />
+                    </div>
+
+                    <button 
+                      type="submit" 
+                      className="w-full py-3 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition text-[11px]"
+                    >
+                      យល់ព្រមបង្កើតកម្មវិធីថ្មី
+                    </button>
+                  </form>
+                </details>
+
+                {/* Event Statistics Cards */}
+                <div className="bg-white p-4.5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">របាយការណ៍បច្ចុប្បន្ន</span>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <span className="text-[9px] text-slate-400 block">ភ្ញៀវចុះឈ្មោះ</span>
+                      <strong className="text-lg text-slate-800 leading-tight block">{stats.totalRegistered} នាក់</strong>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100">
+                      <span className="text-[9px] text-slate-400 block">វត្តមានស្តែង</span>
+                      <strong className="text-lg text-emerald-600 leading-tight block">{stats.actualAttendees} នាក់</strong>
+                    </div>
+                    <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 col-span-2">
+                      <span className="text-[9px] text-slate-400 block">ថវិកាចងដៃ (គិតជា USD)</span>
+                      <strong className="text-base text-rose-600 font-sans leading-tight block">${stats.totalGiftMoneyUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</strong>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Approvals and pending requests of guests for the selected wedding */}
+                <div className="bg-white p-4.5 rounded-2xl border border-slate-100 shadow-sm space-y-3">
+                  <span className="text-[10px] uppercase font-bold text-slate-400 block">ការស្នើសុំចុះឈ្មោះរង់ចាំការអនុម័ត</span>
+                  
+                  {guests.filter(g => g.wedding_id === selectedWeddingId && g.status === 'pending').length === 0 ? (
+                    <p className="text-xs text-slate-400 py-3 text-center">គ្មានការស្នើសុំចុះឈ្មោះកំពុងរង់ចាំឡើយ។</p>
+                  ) : (
+                    <div className="space-y-2">
+                      {guests.filter(g => g.wedding_id === selectedWeddingId && g.status === 'pending').map((pendingG) => (
+                        <div key={pendingG.id} className="p-3 bg-amber-50/50 border border-amber-100 rounded-xl text-xs space-y-2">
+                          <div className="flex justify-between items-start">
+                            <div>
+                              <strong className="text-slate-800 font-bold block">{pendingG.name}</strong>
+                              <span className="text-[10px] text-slate-400 block">{pendingG.phone || 'គ្មានលេខទូរស័ព្ទ'} • {pendingG.relation_type}</span>
+                            </div>
+                            <span className="bg-amber-100 text-amber-800 text-[9px] font-bold px-2 py-0.5 rounded-full">Pending</span>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleApproveGuest(pendingG.id)}
+                              className="flex-1 py-2 bg-emerald-500 hover:bg-emerald-600 text-white font-bold rounded-lg text-[10px] transition"
+                            >
+                              អនុម័ត (Approve)
+                            </button>
+                            <button
+                              onClick={() => handleDeleteGuest(pendingG.id)}
+                              className="py-2 px-3 bg-rose-50 hover:bg-rose-100 text-rose-600 font-bold rounded-lg text-[10px] transition"
+                            >
+                              លុប
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* TAB CONTENT: ADD GUEST */}
+            {mobileDashboardTab === 'add_guest' && (
+              <form onSubmit={handleManualAddGuest} className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4 text-xs animate-fade-in">
+                <div>
+                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-wide mb-1">បន្ថែមព័ត៌មានភ្ញៀវដោយផ្ទាល់</h3>
+                  <p className="text-[10px] text-slate-400">មន្ត្រីទទួលភ្ញៀវ ឬម្ចាស់ការអាចកត់ត្រាឈ្មោះភ្ញៀវ និងប្រាក់ចងដៃដោយផ្ទាល់ដៃ។</p>
+                </div>
+
+                <div>
+                  <label className="block text-slate-600 font-bold mb-1">ឈ្មោះភ្ញៀវកិត្តិយស *</label>
+                  <input
+                    type="text"
+                    required
+                    value={manualGuestName}
+                    onChange={(e) => setManualGuestName(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800"
+                    placeholder="បញ្ចូលឈ្មោះភ្ញៀវ..."
+                  />
+                </div>
+
+                <div className="grid grid-cols-2 gap-2">
+                  <div>
+                    <label className="block text-slate-600 font-bold mb-1">លេខទូរស័ព្ទ</label>
+                    <input
+                      type="tel"
+                      value={manualGuestPhone}
+                      onChange={(e) => setManualGuestPhone(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800"
+                      placeholder="012xxxxxx"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-600 font-bold mb-1">ទំនាក់ទំនង *</label>
+                    <select
+                      value={manualGuestRelation}
+                      onChange={(e) => setManualGuestRelation(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 font-bold"
+                    >
+                      <option value="ខាងកូនកំលោះ">ខាងកូនកំលោះ</option>
+                      <option value="ខាងកូនក្រមុំ">ខាងកូនក្រមុំ</option>
+                      <option value="មិត្តភក្តិ">មិត្តភក្តិ</option>
+                      <option value="ភ្ញៀវកិត្តិយស">ភ្ញៀវកិត្តិយស</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-3 gap-2">
+                  <div className="col-span-2">
+                    <label className="block text-slate-600 font-bold mb-1">ទឹកប្រាក់ចងដៃ</label>
+                    <input
+                      type="number"
+                      value={manualGuestAmount}
+                      onChange={(e) => setManualGuestAmount(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-slate-600 font-bold mb-1">រូបិយប័ណ្ណ</label>
+                    <select
+                      value={manualGuestCurrency}
+                      onChange={(e: any) => setManualGuestCurrency(e.target.value)}
+                      className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 font-bold"
+                    >
+                      <option value="USD">USD ($)</option>
+                      <option value="KHR">KHR (រៀល)</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-slate-600 font-bold mb-1">Note (កំណត់សម្គាល់បន្ថែម)</label>
+                  <textarea
+                    rows={2}
+                    value={manualGuestNote}
+                    onChange={(e) => setManualGuestNote(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800"
+                    placeholder="ឧ. ចូលតុលេខ ១២"
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  className="w-full py-3.5 bg-rose-600 hover:bg-rose-700 text-white font-bold rounded-xl transition text-[11px] shadow-md shadow-rose-600/10"
+                >
+                  រក្សាទុកព័ត៌មានភ្ញៀវ
+                </button>
+              </form>
+            )}
+
+            {/* TAB CONTENT: EVENT_CONFIG */}
+            {mobileDashboardTab === 'event_config' && (
+              <div className="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm space-y-4 animate-fade-in text-xs">
+                <div>
+                  <h3 className="text-xs font-black text-slate-800 uppercase tracking-wide">ការកំណត់ប្រព័ន្ធស្វ័យប្រវត្ត</h3>
+                  <p className="text-[10px] text-slate-400 mt-1">រៀបចំប្រព័ន្ធស្វ័យប្រវត្តជូនដំណឹងទៅកាន់ Telegram និងការតភ្ជាប់ Supabase Cloud។</p>
+                </div>
+
+                <div className="space-y-2 pt-2">
+                  <button
+                    onClick={() => setMobileActiveView('telegram')}
+                    className="w-full py-4 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-150/60 rounded-xl transition flex items-center justify-between text-left"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-sky-100 text-sky-600 rounded-xl flex items-center justify-center">
+                        <Send className="w-5 h-5 animate-pulse" />
+                      </div>
+                      <div>
+                        <strong className="text-slate-800 font-bold block text-xs">ប្រព័ន្ធ Telegram Notify</strong>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">ផ្ញើសារដំណឹងភ្លាមៗរាល់ពេលភ្ញៀវស្កេនចូលតុ</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </button>
+
+                  <button
+                    onClick={() => setMobileActiveView('supabase_settings')}
+                    className="w-full py-4 px-4 bg-slate-50 hover:bg-slate-100 border border-slate-150/60 rounded-xl transition flex items-center justify-between text-left"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-emerald-100 text-emerald-600 rounded-xl flex items-center justify-center">
+                        <Database className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <strong className="text-slate-800 font-bold block text-xs">ការកំណត់ប្រព័ន្ធទិន្នន័យ (SaaS)</strong>
+                        <span className="text-[10px] text-slate-400 block mt-0.5">តភ្ជាប់ទៅកាន់ Cloud database របស់លោកអ្នក</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-400" />
+                  </button>
+
+                  <button
+                    onClick={() => {
+                      setLastScannedResult(null);
+                      setShowQrScanner(true);
+                    }}
+                    className="w-full py-4 px-4 bg-[#112d4d] hover:bg-[#153457] rounded-xl transition flex items-center justify-between text-left text-white"
+                  >
+                    <div className="flex items-center space-x-3">
+                      <div className="w-10 h-10 bg-white/10 text-white rounded-xl flex items-center justify-center">
+                        <Scan className="w-5 h-5" />
+                      </div>
+                      <div>
+                        <strong className="font-bold block text-xs text-white">កម្មវិធីស្កេន QR Code</strong>
+                        <span className="text-[10px] text-slate-300 block mt-0.5">បើកកាមេរ៉ាស្កេនសំបុត្រ ឬ QR ចូលរួមមង្គលការ</span>
+                      </div>
+                    </div>
+                    <ChevronRight className="w-4 h-4 text-slate-300" />
+                  </button>
+                </div>
+              </div>
+            )}
+            
+            <button
+              onClick={() => setMobileActiveView('home')}
+              className="w-full block py-3 mt-4 text-center rounded-xl bg-slate-200/50 hover:bg-slate-200 text-slate-600 text-xs font-bold transition"
+            >
+              ចាកចេញពីផ្ទាំងគ្រប់គ្រង (Back to Home)
             </button>
           </div>
         )}
@@ -4679,7 +5101,7 @@ export default function App() {
                     ) : (
                       <table className="w-full text-left text-xs text-slate-600" id="tbl-admin-guests">
                         <thead className="bg-[#fff9f9] text-slate-700 uppercase tracking-wider text-[11px] border-b border-rose-50">
-                          <tr>
+                 <tr>
                             <th className="px-5 py-3.5">ភ្ញៀវកិត្តិយស</th>
                             <th className="px-5 py-3.5">ទូរស័ព្ទ / ទំនាក់ទំនង</th>
                             <th className="px-5 py-3.5">អ្នករួមដំណើរ (នាក់)</th>
@@ -4740,7 +5162,7 @@ export default function App() {
                                       <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
                                       ចូលតុរួចរាល់
                                     </span>
-                                    <span className="text-[10px] font-mono text-slate-500 font-semibold">{g.check_in_time}</span>
+                                    <span className="text-[10px] font-mono text-slate-550 font-semibold">{g.check_in_time}</span>
                                   </div>
                                 ) : (
                                   <span className="text-slate-400 text-[10px] italic">មិនទាន់ចូលតុ</span>
