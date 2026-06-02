@@ -1233,14 +1233,27 @@ export default function App() {
     }
   }, [saasSession, mobileActiveView]);
 
-  // Require dashboard registration/login first on mobile when using Supabase
+  // Require dashboard registration/login first on mobile when using Supabase, except for guests scanning QR
   useEffect(() => {
-    if (isMobile && connectionMode === 'supabase' && !saasSession && !saasAuthLoading) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const queryWeddingId = urlParams.get('weddingId');
+    if (isMobile && connectionMode === 'supabase' && !saasSession && !saasAuthLoading && !queryWeddingId) {
       if (mobileActiveView !== 'mobile_auth') {
         setMobileActiveView('mobile_auth');
       }
     }
   }, [isMobile, connectionMode, saasSession, saasAuthLoading, mobileActiveView]);
+
+  // Auto-redirect URL with weddingId to guest registration tab
+  useEffect(() => {
+    const queryWeddingId = new URLSearchParams(window.location.search).get('weddingId');
+    if (queryWeddingId) {
+      setCurrentRole('guest');
+      if (isMobile) {
+        setMobileActiveView('register');
+      }
+    }
+  }, [isMobile]);
 
   // Refetch data when session changes
   useEffect(() => {
@@ -1292,6 +1305,7 @@ export default function App() {
     if (!supabaseClient) return;
     setAuthProcessing(true);
     try {
+      showNotification('កំពុងបញ្ជូនទៅកាន់ Google Auth... (សូមប្រាកដថាអ្នកបានបើក Google Connection ក្នុង Supabase)', 'info');
       const { error } = await supabaseClient.auth.signInWithOAuth({
         provider: 'google',
         options: {
@@ -1301,7 +1315,7 @@ export default function App() {
       if (error) throw error;
     } catch (err: any) {
       setAuthProcessing(false);
-      showNotification(err.message, 'error');
+      showNotification(`តភ្ជាប់ Google មិនជោគជ័យ៖ ${err.message || err}. ប្រសិនបើលោកអ្នកមិនទាន់បានរៀបចំ Google Credentials នៅក្នុង Supabase ទេ សូមចុះឈ្មោះដោយវាយ អ៊ីមែល និងពាក្យសម្ងាត់ ផ្ទាល់ជាមួយទម្រង់ខាងលើជំនួសវិញ។`, 'error');
     }
   };
 
@@ -1314,29 +1328,49 @@ export default function App() {
       const inputVal = authEmail.trim();
       const isEmail = inputVal.includes('@');
       const formattedEmail = isEmail ? inputVal : `${inputVal.replace(/[^0-9+]/g, '')}@phone.wedding.com`;
+      const fallbackUsername = isEmail ? inputVal.split('@')[0] : `user_${inputVal.replace(/[^0-9]/g, '')}`;
+      const usernameVal = authUsername.trim() || fallbackUsername;
 
       if (isLoginMode) {
-        const { error } = await supabaseClient.auth.signInWithPassword({
+        const { data, error } = await supabaseClient.auth.signInWithPassword({
           email: formattedEmail,
           password: authPassword,
         });
-        if (error) throw error;
+        if (error) {
+          if (error.message?.toLowerCase().includes('confirm') || error.message?.toLowerCase().includes('verified')) {
+            throw new Error(`គណនីមិនទាន់មានការបញ្ជាក់៖ ${error.message} (សូមពិនិត្យមើល Inbox/Spam ក្នុង Gmail របស់អ្នក ឬបើអ្នកជាម្ចាស់ Supabase សូមបិទ "Confirm Email" នៅក្នុង Dashboard > Authentication > Providers > Email ដំណើរការភ្លាមៗ)`);
+          }
+          throw error;
+        }
+        if (data?.session) {
+          setSaasSession(data.session);
+        }
         showNotification('ចូលប្រព័ន្ធបានជោគជ័យ', 'success');
       } else {
-        const { error } = await supabaseClient.auth.signUp({
+        const { data, error } = await supabaseClient.auth.signUp({
           email: formattedEmail,
           password: authPassword,
           options: {
             data: {
-              username: authUsername,
+              username: usernameVal,
               phone_or_email: inputVal,
               is_phone: !isEmail,
             }
           }
         });
         if (error) throw error;
-        showNotification('បង្កើតគណនីបានជោគជ័យ សូមចូលប្រព័ន្ធ', 'success');
-        setIsLoginMode(true);
+        
+        if (data?.session) {
+          setSaasSession(data.session);
+          showNotification('ចុះឈ្មោះ និងចូលប្រើប្រាស់បានជោគជ័យ!', 'success');
+        } else {
+          if (isEmail) {
+            showNotification('ចុះឈ្មោះគណនីជោគជ័យ! ប្រសិនបើ Supabase របស់លោកអ្នកបើក email verification សូមពិនិត្យ Gmail inbox/spam ដើម្បីបញ្ជាក់ Link ឬបិទ "Confirm Email" នៅក្នុង Supabase Dashboard ដើម្បីកុំឱ្យពិបាកបញ្ជាក់។', 'info');
+          } else {
+            showNotification('បង្កើតគណនីបានជោគជ័យ សូមចូលប្រព័ន្ធ', 'success');
+          }
+          setIsLoginMode(true);
+        }
       }
     } catch (err: any) {
       showNotification(err.message || 'ការផ្ទៀងផ្ទាត់មិនជោគជ័យទេ', 'error');
