@@ -365,32 +365,113 @@ const formatCurrency = (amount: number, currency: 'USD' | 'KHR') => {
 
 const ImageUploader = ({ value, onChange, label, optional, placeholder }: { value: string, onChange: (v: string) => void, label: string, optional?: boolean, placeholder?: string }) => {
   const [dragActive, setDragActive] = useState(false);
+  const [showUrlInput, setShowUrlInput] = useState(false);
+  const [urlValue, setUrlValue] = useState('');
+  const fileInputId = useMemo(() => "file-" + Math.random().toString(36).substr(2, 9), []);
+
+  useEffect(() => {
+    if (value && !value.startsWith('data:')) {
+      setUrlValue(value);
+    } else if (!value) {
+      setUrlValue('');
+    }
+  }, [value]);
+
   const handleFile = (file: File) => {
     if (file && file.type.startsWith('image/')) {
         const reader = new FileReader();
-        reader.onloadend = () => { onChange(reader.result as string); };
+        reader.onloadend = () => { 
+          onChange(reader.result as string); 
+          setUrlValue('');
+        };
         reader.readAsDataURL(file);
     }
   };
+
+  const isBase64 = value ? value.startsWith('data:') : false;
+
   return (
     <div className="space-y-1.5 font-sans">
        <label className="block text-slate-700 font-semibold mb-1">{label} {optional ? '(ស្រេចចិត្ត)' : '*'}</label>
-       <label style={{ cursor: 'pointer' }} className={`w-full flex flex-col items-center justify-center p-4 border-2 border-dashed rounded-xl transition ${dragActive ? 'border-wedding-500 bg-wedding-50' : 'border-slate-300 bg-slate-50'}`}
+       <div 
+          className={`w-full flex flex-col items-center justify-center p-3 border-2 border-dashed rounded-xl transition relative group ${
+            dragActive ? 'border-rose-500 bg-rose-50/50' : 'border-slate-300 bg-slate-50'
+          }`}
           onDragOver={(e) => { e.preventDefault(); setDragActive(true); }}
           onDragLeave={(e) => { e.preventDefault(); setDragActive(false); }}
           onDrop={(e) => { e.preventDefault(); setDragActive(false); if (e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]); }}
        >
          {value ? (
-           <img src={value} className="max-h-32 object-contain rounded shadow-sm" alt="QR" />
+           <div className="text-center w-full flex flex-col items-center">
+             <img src={value} className="max-h-24 object-contain rounded shadow-sm p-1 bg-white border border-slate-100" alt="QR" />
+             <div className="mt-1.5 text-slate-400 text-[9px] max-w-full truncate px-2 font-mono">
+               {isBase64 ? '📷 បានបញ្ចូលដោយជោគជ័យ' : value}
+             </div>
+           </div>
          ) : (
-           <div className="text-center text-slate-500">
-             <Camera className="mx-auto w-8 h-8 mb-2 opacity-30 text-rose-500"/>
-             <span className="text-xs font-semibold">{placeholder || 'Upload ឬ Drag រូបភាពបញ្ចូលទីនេះ'}</span>
+           <div className="text-center text-slate-500 py-1 w-full flex flex-col items-center">
+             <input 
+               type="file" 
+               accept="image/*" 
+               id={fileInputId}
+               className="hidden" 
+               onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} 
+             />
+             <label htmlFor={fileInputId} className="cursor-pointer flex flex-col items-center justify-center w-full">
+               <Camera className="mx-auto w-7 h-7 mb-1 text-rose-500 group-hover:scale-110 transition-transform duration-200" />
+               <span className="text-xs font-bold text-slate-700">{placeholder || 'ចុចទីនេះ ដើម្បីទាញយកពីទូរស័ព្ទ'}</span>
+               <span className="text-[10px] text-slate-400 mt-0.5">ឬទាញរូបភាពមកដាក់ទីនេះ</span>
+             </label>
+             
+             {!showUrlInput ? (
+               <button
+                 type="button"
+                 onClick={() => setShowUrlInput(true)}
+                 className="text-[10px] text-rose-500 font-bold hover:underline mt-2.5"
+               >
+                 👉 ឬបញ្ចូលជា Link/URL
+               </button>
+             ) : (
+               <div className="w-full mt-2.5 pt-2.5 border-t border-slate-150/60 flex flex-col gap-1 items-center">
+                 <input 
+                   type="text"
+                   placeholder="https://example.com/qr.png" 
+                   value={urlValue}
+                   onChange={(e) => setUrlValue(e.target.value)}
+                   className="w-full bg-white border border-slate-200 rounded-lg p-1.5 text-[10px] text-slate-700 focus:outline-none"
+                 />
+                 <div className="flex gap-2 w-full justify-center">
+                   <button
+                     type="button"
+                     onClick={() => { if (urlValue.trim()) onChange(urlValue.trim()); }}
+                     className="px-2 py-1 bg-rose-500 text-white rounded-md text-[10px] font-bold"
+                   >
+                     ប្រើប្រាស់ Link
+                   </button>
+                   <button
+                     type="button"
+                     onClick={() => setShowUrlInput(false)}
+                     className="px-2 py-1 bg-slate-200 text-slate-600 rounded-md text-[10px] font-bold"
+                   >
+                     បោះបង់
+                   </button>
+                 </div>
+               </div>
+             )}
            </div>
          )}
-         <input type="file" accept="image/*" className="hidden" onChange={(e) => { if (e.target.files?.[0]) handleFile(e.target.files[0]); }} />
-       </label>
-       {value && <div className="text-right mt-1"><button type="button" onClick={(e) => {e.preventDefault(); onChange('')}} className="text-[10px] text-rose-500 hover:text-rose-700 font-bold transition">✕ លុបរូបភាពចេញ</button></div>}
+       </div>
+       {value && (
+         <div className="text-right mt-0.5">
+           <button 
+             type="button" 
+             onClick={(e) => {e.preventDefault(); onChange(''); setUrlValue('');}} 
+             className="text-[10px] text-rose-500 hover:text-rose-700 font-bold transition flex items-center gap-0.5 justify-end ml-auto"
+           >
+             ✕ លុបរូបភាពចេញ
+           </button>
+         </div>
+       )}
     </div>
   );
 };
@@ -1152,6 +1233,15 @@ export default function App() {
     }
   }, [saasSession, mobileActiveView]);
 
+  // Require dashboard registration/login first on mobile when using Supabase
+  useEffect(() => {
+    if (isMobile && connectionMode === 'supabase' && !saasSession && !saasAuthLoading) {
+      if (mobileActiveView !== 'mobile_auth') {
+        setMobileActiveView('mobile_auth');
+      }
+    }
+  }, [isMobile, connectionMode, saasSession, saasAuthLoading, mobileActiveView]);
+
   // Refetch data when session changes
   useEffect(() => {
     if (connectionMode === 'supabase' && supabaseClient && saasSession) {
@@ -1221,20 +1311,26 @@ export default function App() {
     setAuthProcessing(true);
     
     try {
+      const inputVal = authEmail.trim();
+      const isEmail = inputVal.includes('@');
+      const formattedEmail = isEmail ? inputVal : `${inputVal.replace(/[^0-9+]/g, '')}@phone.wedding.com`;
+
       if (isLoginMode) {
         const { error } = await supabaseClient.auth.signInWithPassword({
-          email: authEmail,
+          email: formattedEmail,
           password: authPassword,
         });
         if (error) throw error;
         showNotification('ចូលប្រព័ន្ធបានជោគជ័យ', 'success');
       } else {
         const { error } = await supabaseClient.auth.signUp({
-          email: authEmail,
+          email: formattedEmail,
           password: authPassword,
           options: {
             data: {
               username: authUsername,
+              phone_or_email: inputVal,
+              is_phone: !isEmail,
             }
           }
         });
@@ -2532,7 +2628,7 @@ export default function App() {
               >
                 <LogOut className="w-4 h-4" />
               </button>
-            ) : (
+            ) : !(connectionMode === 'supabase' && !saasSession) ? (
               <button 
                 onClick={() => {
                   const nextRole = currentRole === 'guest' ? 'dashboard' : 'guest';
@@ -2553,7 +2649,7 @@ export default function App() {
               >
                 <UserCheck className="w-4 h-4 stroke-[2.5]" />
               </button>
-            )}
+            ) : null}
           </div>
         </header>
 
@@ -3477,14 +3573,14 @@ export default function App() {
                 </div>
               )}
               <div>
-                <label className="block text-slate-200 mt-1 font-bold mb-1.5 text-left">អ៊ីមែល (Email) *</label>
+                <label className="block text-slate-200 mt-1 font-bold mb-1.5 text-left">អ៊ីមែល ឬ លេខទូរស័ព្ទ (Email or Phone Number) *</label>
                 <input
-                  type="email"
+                  type="text"
                   required
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
                   className="w-full bg-[#112d4d] border border-slate-700/60 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500 text-xs"
-                  placeholder="name@example.com"
+                  placeholder="name@example.com ឬ 012345678"
                 />
               </div>
               <div>
@@ -3549,12 +3645,14 @@ export default function App() {
               </button>
             </div>
             
-            <button
-              onClick={() => setMobileActiveView('home')}
-              className="mt-6 text-xs text-slate-400 hover:text-white"
-            >
-              ត្រលប់ទៅទំព័រដើមវិញ
-            </button>
+            {!(connectionMode === 'supabase' && !saasSession) && (
+              <button
+                onClick={() => setMobileActiveView('home')}
+                className="mt-6 text-xs text-slate-400 hover:text-white"
+              >
+                ត្រលប់ទៅទំព័រដើមវិញ
+              </button>
+            )}
           </div>
         )}
 
@@ -3696,25 +3794,19 @@ export default function App() {
                         />
                       </div>
                     </div>
-                    <div>
-                      <label className="block text-slate-600 font-bold mb-1">KHQR Image URL (KHR) *</label>
-                      <input 
-                        type="text" 
-                        required 
+                    <div className="grid grid-cols-2 gap-3">
+                      <ImageUploader 
+                        label="រូបភាព KHQR (KHR)" 
                         value={newWeddingKhqrUrl} 
-                        onChange={(e) => setNewWeddingKhqrUrl(e.target.value)} 
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 font-mono" 
-                        placeholder="https://..." 
+                        onChange={setNewWeddingKhqrUrl} 
+                        placeholder="Upload KHR"
                       />
-                    </div>
-                    <div>
-                      <label className="block text-slate-600 font-bold mb-1">KHQR Image URL (USD)</label>
-                      <input 
-                        type="text" 
+                      <ImageUploader 
+                        label="រូបភាព KHQR (USD)" 
                         value={newWeddingKhqrUsdUrl} 
-                        onChange={(e) => setNewWeddingKhqrUsdUrl(e.target.value)} 
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-800 font-mono" 
-                        placeholder="https://... (Optional)" 
+                        onChange={setNewWeddingKhqrUsdUrl} 
+                        optional
+                        placeholder="Upload USD"
                       />
                     </div>
 
@@ -4073,69 +4165,71 @@ export default function App() {
         {/* ========================================= */}
         {/* STICKY BOTTOM NAVIGATION BAR */}
         {/* ========================================= */}
-        <nav className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-slate-200 shadow-[0_-5px_15px_rgb(0,0,0,0.03)] flex items-center justify-around text-slate-500 z-40">
-          
-          <button 
-            onClick={() => {
-              setMobileActiveView('home');
-              setMobilePopup(null);
-            }} 
-            className={`flex flex-col items-center space-y-1 ${mobileActiveView === 'home' ? 'text-rose-500' : 'hover:text-rose-500'}`}
-          >
-            <Home className="w-5 h-5" />
-            <span className="text-[10px] font-bold">ទំព័រដើម</span>
-          </button>
-
-          <button 
-            onClick={() => {
-              setMobileActiveView('register');
-              setMobilePopup(null);
-            }} 
-            className={`flex flex-col items-center space-y-1 ${mobileActiveView === 'register' ? 'text-rose-500' : 'hover:text-rose-500'}`}
-          >
-            <BookOpen className="w-5 h-5" />
-            <span className="text-[10px] font-bold">ចុះឈ្មោះ</span>
-          </button>
-
-          {/* ACLEDA ACTIVE BLUE CIRCULAR BUTTON */}
-          <button 
-            onClick={() => {
-              ensureSaasActive(() => {
-                setShowQrScanner(true);
-              });
-            }}
-            className="w-13 h-13 bg-gradient-to-tr from-[#132d4a] to-[#204a75] rounded-full border-4 border-white -mt-5 shadow-lg shadow-sky-900/30 flex items-center justify-center text-white active:scale-95 transition"
-          >
-            <Scan className="w-5 h-5" />
-          </button>
-
-          <button 
-            onClick={() => {
-              ensureSaasActive(() => {
-                setMobileActiveView('list');
+        {!(connectionMode === 'supabase' && !saasSession) && (
+          <nav className="fixed bottom-0 left-0 right-0 h-16 bg-white border-t border-slate-200 shadow-[0_-5px_15px_rgb(0,0,0,0.03)] flex items-center justify-around text-slate-500 z-40">
+            
+            <button 
+              onClick={() => {
+                setMobileActiveView('home');
                 setMobilePopup(null);
-              });
-            }} 
-            className={`flex flex-col items-center space-y-1 ${mobileActiveView === 'list' ? 'text-rose-500' : 'hover:text-rose-500'}`}
-          >
-            <Users className="w-5 h-5" />
-            <span className="text-[10px] font-bold">បញ្ជីភ្ញៀវ</span>
-          </button>
+              }} 
+              className={`flex flex-col items-center space-y-1 ${mobileActiveView === 'home' ? 'text-rose-500' : 'hover:text-rose-500'}`}
+            >
+              <Home className="w-5 h-5" />
+              <span className="text-[10px] font-bold">ទំព័រដើម</span>
+            </button>
 
-          <button 
-            onClick={() => {
-              ensureSaasActive(() => {
-                setMobileActiveView('bonds');
+            <button 
+              onClick={() => {
+                setMobileActiveView('register');
                 setMobilePopup(null);
-              });
-            }} 
-            className={`flex flex-col items-center space-y-1 ${mobileActiveView === 'bonds' ? 'text-rose-500' : 'hover:text-rose-500'}`}
-          >
-            <TrendingUp className="w-5 h-5" />
-            <span className="text-[10px] font-bold">ព័ត៌មាន</span>
-          </button>
+              }} 
+              className={`flex flex-col items-center space-y-1 ${mobileActiveView === 'register' ? 'text-rose-500' : 'hover:text-rose-500'}`}
+            >
+              <BookOpen className="w-5 h-5" />
+              <span className="text-[10px] font-bold">ចុះឈ្មោះ</span>
+            </button>
 
-        </nav>
+            {/* ACLEDA ACTIVE BLUE CIRCULAR BUTTON */}
+            <button 
+              onClick={() => {
+                ensureSaasActive(() => {
+                  setShowQrScanner(true);
+                });
+              }}
+              className="w-13 h-13 bg-gradient-to-tr from-[#132d4a] to-[#204a75] rounded-full border-4 border-white -mt-5 shadow-lg shadow-sky-900/30 flex items-center justify-center text-white active:scale-95 transition"
+            >
+              <Scan className="w-5 h-5" />
+            </button>
+
+            <button 
+              onClick={() => {
+                ensureSaasActive(() => {
+                  setMobileActiveView('list');
+                  setMobilePopup(null);
+                });
+              }} 
+              className={`flex flex-col items-center space-y-1 ${mobileActiveView === 'list' ? 'text-rose-500' : 'hover:text-rose-500'}`}
+            >
+              <Users className="w-5 h-5" />
+              <span className="text-[10px] font-bold">បញ្ជីភ្ញៀវ</span>
+            </button>
+
+            <button 
+              onClick={() => {
+                ensureSaasActive(() => {
+                  setMobileActiveView('bonds');
+                  setMobilePopup(null);
+                });
+              }} 
+              className={`flex flex-col items-center space-y-1 ${mobileActiveView === 'bonds' ? 'text-rose-500' : 'hover:text-rose-500'}`}
+            >
+              <TrendingUp className="w-5 h-5" />
+              <span className="text-[10px] font-bold">ព័ត៌មាន</span>
+            </button>
+
+          </nav>
+        )}
 
       </div>
     );
@@ -4376,14 +4470,14 @@ export default function App() {
                 </div>
               )}
               <div>
-                <label className="block text-sm font-bold text-slate-700 mb-1.5">អ៊ីមែល (Email)</label>
+                <label className="block text-sm font-bold text-slate-700 mb-1.5">អ៊ីមែល ឬ លេខទូរស័ព្ទ (Email / Phone Number)</label>
                 <input
-                  type="email"
+                  type="text"
                   required
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
                   className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3 text-slate-800 focus:outline-none focus:ring-2 focus:ring-rose-500/20"
-                  placeholder="name@example.com"
+                  placeholder="name@example.com ឬ 012345678"
                 />
               </div>
               <div>
