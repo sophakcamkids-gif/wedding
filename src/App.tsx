@@ -379,12 +379,54 @@ const ImageUploader = ({ value, onChange, label, optional, placeholder }: { valu
 
   const handleFile = (file: File) => {
     if (file && file.type.startsWith('image/')) {
-        const reader = new FileReader();
-        reader.onloadend = () => { 
-          onChange(reader.result as string); 
-          setUrlValue('');
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const img = new Image();
+        img.onload = () => {
+          // Compress image to a max of 800px width/height to make it highly optimized
+          const MAX_WIDTH = 800;
+          const MAX_HEIGHT = 800;
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > MAX_WIDTH) {
+              height = Math.round((height * MAX_WIDTH) / width);
+              width = MAX_WIDTH;
+            }
+          } else {
+            if (height > MAX_HEIGHT) {
+              width = Math.round((width * MAX_HEIGHT) / height);
+              height = MAX_HEIGHT;
+            }
+          }
+
+          const canvas = document.createElement('canvas');
+          canvas.width = width;
+          canvas.height = height;
+
+          const ctx = canvas.getContext('2d');
+          if (ctx) {
+            // Fill canvas with solid white background (prevents transparent PNGs from rendering black on JPEGs)
+            ctx.fillStyle = '#FFFFFF';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw original image resized
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Convert to a compressed lightweight JPEG (0.7 quality)
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+            onChange(compressedBase64);
+            setUrlValue('');
+          } else {
+            // Fallback if canvas context fails
+            onChange(event.target?.result as string);
+            setUrlValue('');
+          }
         };
-        reader.readAsDataURL(file);
+        img.src = event.target?.result as string;
+      };
+      reader.readAsDataURL(file);
     }
   };
 
