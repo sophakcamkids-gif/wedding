@@ -633,8 +633,8 @@ export default function App() {
   const [isInitializingDb, setIsInitializingDb] = useState(false);
 
   // Active User Role state
-  // Roles: 'guest' | 'dashboard'
-  const [currentRole, setCurrentRole] = useState<'guest' | 'dashboard'>('guest');
+  // Roles: 'guest' | 'dashboard' | 'admin'
+  const [currentRole, setCurrentRole] = useState<'guest' | 'dashboard' | 'admin'>('guest');
 
   // ACLEDA Mobile HUD integrations status
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
@@ -687,6 +687,17 @@ export default function App() {
   const [adminUsername, setAdminUsername] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
   const [isAdminLoggedIn, setIsAdminLoggedIn] = useState(false);
+
+  // Helper to check if the current logged-in user is Sophak or the official Admin Coordinator
+  const isUserSophakOrAdmin = () => {
+    const currentEmail = saasSession?.user?.email || '';
+    const lowerEmail = currentEmail.toLowerCase();
+    return (
+      lowerEmail === 'sophak.camkids@gmail.com' || 
+      lowerEmail === 'phornsophak@gmail.com' ||
+      isAdminLoggedIn
+    );
+  };
 
   // Premium/SaaS Subscriptions Approval system
   const [saasSubscriptions, setSaasSubscriptions] = useState<any[]>(() => {
@@ -1830,7 +1841,7 @@ export default function App() {
   };
 
   // Switch role action helper
-  const handleRoleSwitch = (role: 'guest' | 'dashboard') => {
+  const handleRoleSwitch = (role: 'guest' | 'dashboard' | 'admin') => {
     setCurrentRole(role);
     setSearchQuery('');
     setRelationFilter('ទាំងអស់');
@@ -4195,19 +4206,28 @@ export default function App() {
                     <span>ពិនិត្យឡើងវិញ (Refresh Status)</span>
                   </button>
 
-                  {/* Temporary demo bypass so the assessor can play as admin / preview directly */}
-                  <div className="pt-6 border-t border-dashed border-slate-200 mt-6 bg-emerald-50/50 p-4.5 rounded-2xl border border-emerald-100">
-                    <p className="text-xs text-emerald-800 mb-3 font-extrabold text-center leading-relaxed">
-                      💡 សម្រាប់តេស្តសាកល្បង៖ អ្នកមិនចាំបាច់រង់ចាំយូរទេ! សូមចុចប៊ូតុងពណ៌បៃតងធំខាងក្រោមនេះដើម្បីយល់ព្រមភ្លាមៗ៖
-                    </p>
-                    <button
-                      onClick={() => handleApproveSubscription(currentActiveSub.email)}
-                      className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 active:scale-95 transition-all text-white font-black rounded-xl shadow-md shadow-emerald-500/20 text-xs cursor-pointer flex items-center justify-center space-x-2 animate-bounce"
-                    >
-                      <Check className="w-4 h-4 stroke-[3.5] text-white" />
-                      <span>ចុចអនុម័តគណនីភ្លាមៗ (Quick Approve Bypass)</span>
-                    </button>
-                  </div>
+                  {/* Demo bypass ONLY visible if the logged-in user is Sophak or Admin */}
+                  {isUserSophakOrAdmin() ? (
+                    <div className="pt-6 border-t border-dashed border-slate-200 mt-6 bg-emerald-50/50 p-4.5 rounded-2xl border border-emerald-100">
+                      <p className="text-xs text-emerald-800 mb-3 font-extrabold text-center leading-relaxed">
+                        💡 Admin Panel Quick Bypass (បង្ហាញតែចំពោះលោក សុភ័ក្ត្រ ឬ Admin ប៉ុណ្ណោះ)៖
+                      </p>
+                      <button
+                        onClick={() => handleApproveSubscription(currentActiveSub.email)}
+                        className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 active:scale-95 transition-all text-white font-black rounded-xl shadow-md shadow-emerald-500/20 text-xs cursor-pointer flex items-center justify-center space-x-2"
+                      >
+                        <Check className="w-4 h-4 stroke-[3.5] text-white" />
+                        <span>ចុចអនុម័តគណនីភ្លាមៗ (Quick Approve Bypass)</span>
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="pt-4 border-t border-slate-100 mt-4">
+                      <p className="text-[11px] text-slate-500 text-center leading-relaxed flex items-center justify-center space-x-1">
+                        <Lock className="w-3.5 h-3.5 text-rose-500/80 shrink-0" />
+                        <span>ប្រព័ន្ធសុវត្ថិភាពខ្ពស់ និងផ្ទៀងផ្ទាត់ការទូទាត់ជាក់ស្តែងដោយផ្ទាល់ពី Admin។</span>
+                      </p>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -5123,6 +5143,19 @@ export default function App() {
             <span>អ្នកគ្រប់គ្រង (Dashboard)</span>
           </button>
 
+          <button
+            onClick={() => handleRoleSwitch('admin')}
+            className={`px-4 py-2.5 md:py-2 text-[13px] md:text-sm font-bold rounded-xl transition-all duration-300 flex items-center space-x-1.5 cursor-pointer flex-shrink-0 ${
+              currentRole === 'admin'
+                ? 'bg-white text-rose-600 shadow-[0_2px_10px_rgb(0,0,0,0.06)]'
+                : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100/50'
+            }`}
+            id="role-admin-view"
+          >
+            <Lock className="w-4 h-4 text-rose-500" />
+            <span>អ្នកអនុម័ត SaaS / Admin</span>
+          </button>
+
           {((connectionMode === 'supabase' && saasSession) || isDashboardLoggedIn) && (
             <button
               onClick={() => {
@@ -5711,7 +5744,7 @@ export default function App() {
         {currentRole === 'admin' && (
           <div className="space-y-6">
             {!isAdminLoggedIn ? (
-              /* Admin Login Form */
+
               <div className="bg-white rounded-3xl border border-slate-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] p-6 max-w-md mx-auto">
                 <div className="flex flex-col items-center mb-6">
                   <div className="p-3.5 bg-rose-50 text-wedding-600 rounded-full mb-2">
