@@ -868,6 +868,7 @@ export default function App() {
       }
     } else {
       // Premium is checked out visually but not approved automatically info
+      setIsCheckingOutPremium(true);
       showNotification('សូមស្កេន KHQR ដើម្បីទូទាត់ប្រាក់ និងបញ្ជូនភស្តុតាង!', 'info');
     }
   };
@@ -6667,7 +6668,7 @@ export default function App() {
                          <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5"/> <span>តភ្ជាប់ Telegram Bot ផ្ញើដំណឹងរាល់ការ Check-in</span></li>
                        </ul>
                        
-                       <button onClick={() => { selectPlan('premium'); showNotification('អបអរសាទរ! គណនីរបស់អ្នកបានក្លាយជា Premium!', 'success'); }} className="mt-auto py-3.5 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white shadow-lg font-bold hover:-translate-y-0.5 transition-all w-full cursor-pointer flex items-center justify-center space-x-2">
+                       <button onClick={() => { selectPlan('premium'); }} className="mt-auto py-3.5 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white shadow-lg font-bold hover:-translate-y-0.5 transition-all w-full cursor-pointer flex items-center justify-center space-x-2">
                          <Unlock className="w-4 h-4" />
                          <span>អាប់ហ្គ្រេតគម្រោងរបស់ខ្ញុំ (Upgrade)</span>
                        </button>
