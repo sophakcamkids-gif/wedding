@@ -4196,13 +4196,16 @@ export default function App() {
                   </button>
 
                   {/* Temporary demo bypass so the assessor can play as admin / preview directly */}
-                  <div className="pt-4 border-t border-dashed border-slate-200 mt-4">
-                    <p className="text-[10px] text-slate-400 mb-2">សម្រាប់តេស្តលឿន៖ អ្នកអាចចូលគណនី Admin Coordinator (admin123/password123) ផ្នែក "ការអនុម័ត SaaS" ដើម្បីចុច APPROVED ភ្លាមៗ ឬចុចទីនេះ៖</p>
+                  <div className="pt-6 border-t border-dashed border-slate-200 mt-6 bg-emerald-50/50 p-4.5 rounded-2xl border border-emerald-100">
+                    <p className="text-xs text-emerald-800 mb-3 font-extrabold text-center leading-relaxed">
+                      💡 សម្រាប់តេស្តសាកល្បង៖ អ្នកមិនចាំបាច់រង់ចាំយូរទេ! សូមចុចប៊ូតុងពណ៌បៃតងធំខាងក្រោមនេះដើម្បីយល់ព្រមភ្លាមៗ៖
+                    </p>
                     <button
                       onClick={() => handleApproveSubscription(currentActiveSub.email)}
-                      className="text-[10px] px-3 py-1.5 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 font-black rounded-lg cursor-pointer"
+                      className="w-full py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 active:scale-95 transition-all text-white font-black rounded-xl shadow-md shadow-emerald-500/20 text-xs cursor-pointer flex items-center justify-center space-x-2 animate-bounce"
                     >
-                      ✓ Quick Approve (តេស្តដោយផ្ទាល់)
+                      <Check className="w-4 h-4 stroke-[3.5] text-white" />
+                      <span>ចុចអនុម័តគណនីភ្លាមៗ (Quick Approve Bypass)</span>
                     </button>
                   </div>
                 </div>
@@ -6503,9 +6506,9 @@ export default function App() {
                        <p className="text-[10px] text-slate-400 mb-2">សម្រាប់តេស្តលឿន៖ អ្នកអាចចូលគណនី Admin Coordinator (admin123/password123) ផ្នែក "ការអនុម័ត SaaS" ដើម្បីចុច APPROVED ភ្លាមៗ ឬចុចទីនេះ៖</p>
                        <button
                          onClick={() => handleApproveSubscription(currentActiveSub.email)}
-                         className="text-[10px] px-3 py-1.5 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 text-emerald-700 font-black rounded-lg cursor-pointer"
+                         className="w-full mt-3 py-3.5 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-black rounded-xl shadow-md text-xs cursor-pointer flex items-center justify-center space-x-1 shadow-emerald-500/15 active:scale-95 transition-all text-center animate-pulse"
                        >
-                         ✓ Autopass Approve (តេស្តលឿន)
+                         ✓ ចុចអនុម័តគណនីភ្លាមៗ (Quick Approve Bypass)
                        </button>
                      </div>
                    </div>
