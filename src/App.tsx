@@ -557,10 +557,8 @@ const calculateKHQR_CRC16 = (str: string): string => {
 };
 
 const SOPHAK_KHQR_Card = () => {
-  // Construct genuine Bakong/ACLEDA KHQR Payload to 'phorn_sophak@aclb' for transaction of $14.99 USD
-  const basePayload = "00020101021229380013kh.com.bakong0117phorn_sophak@aclb520459995303840540514.995802KH5912PHORN SOPHAK6010PHNOM PENH622401201499SaaSSubscription6304";
-  const checksum = calculateKHQR_CRC16(basePayload);
-  const khqrStr = `${basePayload}${checksum}`;
+  // Use the exact genuine QR payload retrieved from the high-resolution ACLEDA KHQR image provided by the user
+  const khqrStr = "00020101021229300016KH317203248380480106aclbkh520459995303840540514.995802KH5912PHORN SOPHAK6010PHNOM PENH6304D7EE";
 
   return (
     <div className="w-full max-w-[280px] mx-auto bg-white rounded-3xl p-0 shadow-xl border border-slate-150 font-sans select-none relative overflow-hidden animate-fade-in text-center my-4">
