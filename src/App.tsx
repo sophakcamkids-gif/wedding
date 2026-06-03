@@ -542,94 +542,81 @@ const ImageUploader = ({ value, onChange, label, optional, placeholder }: { valu
 };
 
 // ==========================================
-// HIGH-FIDELITY VECTOR KHQR CARD OF ADMIN (SOPHAK PHORN)
+// HIGH-FIDELITY VECTOR KHQR CARD OF ADMIN (PHORN SOPHAK)
 // ==========================================
-const SOPHAK_KHQR_Card = () => (
-  <div className="w-full max-w-[280px] mx-auto bg-[#e52a30] rounded-3xl p-4 shadow-xl border border-rose-600 font-sans select-none relative overflow-hidden animate-fade-in text-center my-4">
-    {/* Red top bar with white KHQR logo */}
-    <div className="flex flex-col items-center pb-2.5">
-      <div className="flex items-center space-x-1">
-        <span className="text-white font-extrabold text-xl tracking-widest leading-none">KH</span>
-        <div className="bg-white text-[#e52a30] text-[8px] font-black px-1 py-0.5 rounded-sm leading-none tracking-tight">QR</div>
-      </div>
-    </div>
-    
-    {/* Inner white container */}
-    <div className="bg-white rounded-2xl p-3.5 flex flex-col items-center">
-      {/* Name */}
-      <h4 className="text-slate-800 font-black text-xs tracking-wide mb-2.5 uppercase font-sans">SOPHAK PHORN</h4>
-      
-      {/* Dotted separator line */}
-      <div className="w-full border-t border-dashed border-slate-200 my-1" />
-      
-      {/* QR Code Graphic Container */}
-      <div className="bg-white p-2 rounded-xl border border-slate-100 flex items-center justify-center relative w-[160px] h-[160px] my-2">
-        {/* We use standard high-contrast modern QR mockup drawing as an SVG or render a realistic QR */}
-        <svg className="w-full h-full" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
-          {/* 3 corner finder patterns */}
-          <path d="M5 5h18v18H5zm4 4h10v10H9zm1 1h8v8h-8z" fill="#000"/>
-          <path d="M77 5h18v18H77zm4 4h10v10H81zm1 1h8v8h-8z" fill="#000"/>
-          <path d="M5 77h18v18H5zm4 4h10v10H9zm1 1h8v8h-8z" fill="#000"/>
-          
-          {/* Dense beautiful realistic QR matrix pattern */}
-          <g fill="#000">
-            <rect x="29" y="5" width="2" height="2"/>
-            <rect x="35" y="9" width="4" height="2"/>
-            <rect x="45" y="5" width="2" height="6"/>
-            <rect x="53" y="11" width="2" height="2"/>
-            <rect x="59" y="7" width="4" height="2"/>
-            <rect x="67" y="15" width="2" height="4"/>
-            <rect x="29" y="19" width="6" height="2"/>
-            <rect x="39" y="23" width="2" height="2"/>
-            
-            <rect x="77" y="29" width="4" height="2"/>
-            <rect x="85" y="35" width="2" height="6"/>
-            <rect x="91" y="41" width="4" height="2"/>
-            <rect x="81" y="49" width="2" height="4"/>
-            
-            <rect x="5" y="29" width="2" height="6"/>
-            <rect x="11" y="33" width="4" height="2"/>
-            <rect x="19" y="41" width="2" height="4"/>
-            <rect x="9" y="49" width="4" height="2"/>
-            
-            {/* Grid-like patterns */}
-            <path d="M29 29h6v2h-6zm12 4h4v2h-4zm8-6h2v4h-2zm10 8h2v2h-2zm6-4h4v2h-4z"/>
-            <path d="M5 55h4v2H5zm12 6h2v4h-2zm6-10h6v2h-6zm10 12h2v4h-2zm8 8h6v2h-6z"/>
-            <path d="M55 55h8v2h-8zm12 8h4v2h-4zm10-12h2v4h-2zm6-6h4v2h-4zm-22 16h2v4h-2zm8 4h6v2h-6z"/>
-            
-            {/* Center block placeholder for Bakong logo, clean circular window */}
-            <circle cx="50" cy="50" r="16" fill="#fff"/>
-          </g>
-          
-          {/* Centered Bakong Logo Emblem */}
-          <circle cx="50" cy="50" r="13" fill="#e52a30"/>
-          
-          {/* Cambodian style flower graphic inside circle */}
-          <path d="M50 41.5 c0.5 2 1.5 2 2 0 s1.5-2 2 0 s-0.5 2.5 -2 3.5 s-2-1.5 -2-3.5 z" fill="#fff" opacity="0.9"/>
-          <path d="M50 58.5 c0.5-2 1.5-2 2 0 s1.5 2 2 0 s-0.5-2.5-2-3.5 s-2 1.5-2 3.5 z" fill="#fff" opacity="0.9"/>
-          <path d="M41.5 50 c2 0.5 2 1.5 0 2 s-2 1.5 0 2 s2.5-0.5 3.5-2 s-1.5-2-3.5-2 z" fill="#fff" opacity="0.9"/>
-          <path d="M58.5 50 c-2 0.5 -2 1.5 0 2 s2 1.5 0 2 s-2.5-0.5-3.5-2 s1.5-2 3.5-2 z" fill="#fff" opacity="0.9"/>
-          
-          {/* Diagonals */}
-          <path d="M44 44 c1.5 1.5 2.5 0.5 2-1 s-1-2.5-2-2 s-0.5 2.5 0 3 z" fill="#fff" opacity="0.9"/>
-          <path d="M56 56 c-1.5-1.5-2.5-0.5-2 1 s1 2.5 2 2 s0.5-2.5 0-3 z" fill="#fff" opacity="0.9"/>
-          <path d="M56 44 c-1.5 1.5 -0.5 2.5 1 2 s2.5-1 2-2 s-2.5-0.5-3 0 z" fill="#fff" opacity="0.9"/>
-          <path d="M44 56 c1.5-1.5 0.5-2.5-1-2 s-2.5 1-2 2 s2.5 0.5 3 0 z" fill="#fff" opacity="0.9"/>
-          
-          <circle cx="50" cy="50" r="5" fill="#fff"/>
-          <circle cx="50" cy="50" r="3" fill="#e52a30"/>
-        </svg>
+const calculateKHQR_CRC16 = (str: string): string => {
+  let crc = 0xFFFF;
+  for (let c = 0; c < str.length; c++) {
+    const charCode = str.charCodeAt(c);
+    let x = ((crc >> 8) ^ charCode) & 0xFF;
+    x ^= x >> 4;
+    crc = ((crc << 8) ^ (x << 12) ^ (x << 5) ^ x) & 0xFFFF;
+  }
+  const hex = crc.toString(16).toUpperCase();
+  return hex.padStart(4, '0');
+};
+
+const SOPHAK_KHQR_Card = () => {
+  // Construct genuine Bakong/ACLEDA KHQR Payload to 'phorn_sophak@aclb' for transaction of $14.99 USD
+  const basePayload = "00020101021229380013kh.com.bakong0117phorn_sophak@aclb520459995303840540514.995802KH5912PHORN SOPHAK6010PHNOM PENH622401201499SaaSSubscription6304";
+  const checksum = calculateKHQR_CRC16(basePayload);
+  const khqrStr = `${basePayload}${checksum}`;
+
+  return (
+    <div className="w-full max-w-[280px] mx-auto bg-white rounded-3xl p-0 shadow-xl border border-slate-150 font-sans select-none relative overflow-hidden animate-fade-in text-center my-4">
+      {/* Red header with white KHQR logo */}
+      <div className="bg-[#df1b23] relative py-3.5 px-4 flex justify-center items-center">
+        <div className="flex items-center space-x-1.5 justify-center">
+          <span className="text-white font-extrabold text-base tracking-widest leading-none">KH</span>
+          <div className="bg-white text-[#df1b23] text-[9px] font-black px-1.5 py-0.5 rounded-sm leading-none tracking-tight">QR</div>
+        </div>
+        {/* Subtle white diagonal notch fold on top right */}
+        <div className="absolute top-0 right-0 w-8 h-8 bg-white" style={{ clipPath: 'polygon(100% 0, 0 0, 100% 100%)' }}></div>
       </div>
       
-      {/* Bakong Branding */}
-      <span className="text-[8px] text-slate-400 font-bold uppercase tracking-widest mt-1 font-sans">BAKONG KHQR</span>
+      {/* Inner container */}
+      <div className="p-5 pt-4 flex flex-col items-center">
+        {/* Account Name */}
+        <h4 className="text-slate-800 font-extrabold text-sm tracking-wide mb-1 uppercase font-sans">PHORN SOPHAK</h4>
+        
+        {/* Amount */}
+        <p className="text-xl font-black text-slate-800 font-sans tracking-wide mb-2">14.99 <span className="text-xs font-bold text-slate-500">USD</span></p>
+        
+        {/* Dashed separator line */}
+        <div className="w-full border-t border-dashed border-slate-200 my-3" />
+        
+        {/* QR Code Container */}
+        <div className="bg-white p-2 rounded-2xl border border-slate-100 flex items-center justify-center relative w-[180px] h-[180px] my-1 shadow-xs">
+          <QRCodeSVG
+            value={khqrStr}
+            size={160}
+            level="H"
+            fgColor="#000000"
+            bgColor="#ffffff"
+          />
+          {/* Centered ACLEDA style Red Circle Logo Emblem with custom graphic overlay */}
+          <div className="absolute inset-0 flex items-center justify-center">
+            <div className="w-10 h-10 bg-[#df1b23] rounded-full border-4 border-white flex items-center justify-center shadow-md">
+              {/* White Stylized ACLEDA flower logo */}
+              <svg className="w-5.5 h-5.5 text-white" viewBox="0 0 100 100" fill="currentColor">
+                <circle cx="50" cy="50" r="16" fill="none" stroke="currentColor" strokeWidth="6" />
+                <path d="M50 15 L58 35 L50 45 L42 35 Z" />
+                <path d="M50 85 L58 65 L50 55 L42 65 Z" />
+                <path d="M15 50 L35 58 L45 50 L35 42 Z" />
+                <path d="M85 50 L65 58 L55 50 L65 42 Z" />
+                <circle cx="50" cy="50" r="6" fill="currentColor" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+      
+      {/* Left/Right round notch cuts */}
+      <div className="absolute top-1/2 -left-2 w-4 h-4 rounded-full bg-[#f8fafc] border-r border-slate-200 transform -translate-y-1/2"></div>
+      <div className="absolute top-1/2 -right-2 w-4 h-4 rounded-full bg-[#f8fafc] border-l border-slate-200 transform -translate-y-1/2"></div>
     </div>
-    
-    {/* Clean border styling accents */}
-    <div className="absolute top-1/2 -left-2 w-4 h-4 rounded-full bg-[#f1f5f9] transform -translate-y-1/2"></div>
-    <div className="absolute top-1/2 -right-2 w-4 h-4 rounded-full bg-[#f1f5f9] transform -translate-y-1/2"></div>
-  </div>
-);
+  );
+};
 
 export default function App() {
   // Connection Mode State
