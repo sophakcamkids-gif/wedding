@@ -535,7 +535,7 @@ export default function App() {
 
   // ACLEDA Mobile HUD integrations status
   const [isMobile, setIsMobile] = useState(window.innerWidth < 768);
-  const [mobileActiveView, setMobileActiveView] = useState<'home' | 'register' | 'list' | 'scan' | 'khqr' | 'telegram' | 'supabase_settings' | 'bonds' | 'mobile_auth' | 'dashboard'>('home');
+  const [mobileActiveView, setMobileActiveView] = useState<'home' | 'register' | 'list' | 'scan' | 'khqr' | 'telegram' | 'supabase_settings' | 'bonds' | 'mobile_auth' | 'dashboard' | 'pricing'>('home');
   const [mobileTime, setMobileTime] = useState('16:37');
   const [mobilePopup, setMobilePopup] = useState<'invite' | 'bridegroom' | 'food' | 'gallery' | 'blessing' | null>(null);
   const [customBlessingText, setCustomBlessingText] = useState('');
@@ -601,6 +601,9 @@ export default function App() {
     setHasPaidPlan(true);
     localStorage.setItem('wedding_manager_has_paid_plan', 'true');
     localStorage.setItem('wedding_manager_selected_plan_type', plan);
+    if (isMobile) {
+      setMobileActiveView('home');
+    }
   };
   const [dashboardAuthEmail, setDashboardAuthEmail] = useState('');
   const [dashboardAuthPass, setDashboardAuthPass] = useState('');
@@ -1268,12 +1271,16 @@ export default function App() {
     }
   }, [connectionMode, supabaseClient]);
 
-  // Redirect to home on successful mobile login
+  // Redirect to home or pricing on successful mobile login
   useEffect(() => {
     if (saasSession && mobileActiveView === 'mobile_auth') {
-      setMobileActiveView('home');
+      if (!hasPaidPlan) {
+        setMobileActiveView('pricing');
+      } else {
+        setMobileActiveView('home');
+      }
     }
-  }, [saasSession, mobileActiveView]);
+  }, [saasSession, mobileActiveView, hasPaidPlan]);
 
   // Require dashboard registration/login first on mobile when using Supabase, except for guests scanning QR
   useEffect(() => {
@@ -1380,7 +1387,11 @@ export default function App() {
         });
         if (error) {
           if (error.message?.toLowerCase().includes('confirm') || error.message?.toLowerCase().includes('verified')) {
-            throw new Error(`គណនីមិនទាន់មានការបញ្ជាក់៖ ${error.message} (សូមពិនិត្យមើល Inbox/Spam ក្នុង Gmail របស់អ្នក ឬបើអ្នកជាម្ចាស់ Supabase សូមបិទ "Confirm Email" នៅក្នុង Dashboard > Authentication > Providers > Email ដំណើរការភ្លាមៗ)`);
+            if (!isEmail) {
+              throw new Error(`គណនីលេខទូរស័ព្ទមិនទាន់អាចប្រើប្រាស់បានឡើយ៖ ដោយសារ Supabase របស់អ្នកកំពុងបើក "Confirm Email"។ សូមបើក Supabase Dashboard រួចចូលទៅកាន់ Authentication > Providers > Email រួចបិទ (Turn OFF) "Confirm email" ដើម្បីអាចចុះឈ្មោះ និងចូលប្រើតាមលេខទូរស័ព្ទបានភ្លាមៗ!`);
+            } else {
+              throw new Error(`គណនីមិនទាន់មានការបញ្ជាក់៖ ${error.message} (សូមពិនិត្យមើល Inbox/Spam ក្នុង Gmail របស់អ្នក ឬបើអ្នកជាម្ចាស់ Supabase សូមបិទ "Confirm Email" នៅក្នុង Dashboard > Authentication > Providers > Email ដំណើរការភ្លាមៗ)`);
+            }
           }
           throw error;
         }
@@ -2641,6 +2652,9 @@ export default function App() {
     if (connectionMode === 'supabase' && !saasSession) {
       showNotification('សូមចុះឈ្មោះ ឬចូលគណនីម្ចាស់កម្មវិធីជាមុនសិន!', 'error');
       setMobileActiveView('mobile_auth');
+    } else if (connectionMode === 'supabase' && !hasPaidPlan) {
+      showNotification('សូមជ្រើសរើសកញ្ចប់សេវាកម្មជាមុនសិន!', 'info');
+      setMobileActiveView('pricing');
     } else {
       onValid();
     }
@@ -3729,6 +3743,104 @@ export default function App() {
                 ត្រលប់ទៅទំព័រដើមវិញ
               </button>
             )}
+          </div>
+        )}
+
+        {/* ========================================= */}
+        {/* MOBILE PRICING PLAN SELECTOR */}
+        {/* ========================================= */}
+        {mobileActiveView === 'pricing' && (
+          <div className="flex-1 overflow-y-auto p-5 animate-fade-in text-slate-900 bg-slate-50 text-left flex flex-col pb-12">
+            <div className="text-center mb-6 shrink-0">
+              <div className="inline-flex items-center space-x-1.5 bg-rose-50 text-rose-600 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider mb-2 border border-rose-100/50">
+                <CheckCircle className="w-3.5 h-3.5" />
+                <span>គម្រោងសម្រាប់ម្ចាស់កម្មវិធី (SaaS Plans)</span>
+              </div>
+              <h2 className="text-lg font-black text-slate-800">ជ្រើសរើសកញ្ចប់តម្លៃដែលសាកសម</h2>
+              <p className="text-[11px] text-slate-500 mt-1 max-w-xs mx-auto leading-normal">
+                បង្កើនប្រសិទ្ធភាពក្នុងការគ្រប់គ្រងព្រឹត្តិការណ៍របស់អ្នកឱ្យកាន់តែទំនើប និងចំណេញពេលវេលាខ្ពស់។
+              </p>
+            </div>
+
+            <div className="space-y-4 max-w-sm mx-auto w-full">
+              {/* Card 1: Trial Plan */}
+              <div className="bg-white border border-slate-200 rounded-2xl p-5 hover:shadow-md transition duration-200">
+                <div className="flex justify-between items-start">
+                  <div>
+                    <h3 className="text-sm font-bold text-slate-800">កញ្ចប់សាកល្បង (Trial)</h3>
+                    <p className="text-[10px] text-slate-400 mt-0.5">សម្រាប់កម្មវិធីតូចតាច ឬសាកល្បងប្រព័ន្ធ</p>
+                  </div>
+                  <span className="text-xl font-black text-slate-900">$0</span>
+                </div>
+                
+                <div className="my-3.5 h-px bg-slate-100" />
+                
+                <ul className="space-y-2 text-[11px] text-slate-600 mb-4">
+                  <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0"/> <span>បាន ១ កម្មវិធី (Max 1 Event)</span></li>
+                  <li className="flex items-center gap-2 font-semibold text-rose-600"><CheckCircle className="w-4 h-4 text-rose-500 shrink-0"/> <span>ភ្ញៀវចូលរួមក្រោម ១០០ នាក់ (Under 100 Guests)</span></li>
+                  <li className="flex items-center gap-2 font-semibold text-slate-700"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0"/> <span>ទទួលបានរបាយការណ៍ហិរញ្ញវត្ថុ</span></li>
+                  <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-emerald-500 shrink-0"/> <span>មុខងារទាញយកបញ្ជីភ្ញៀវចូលតុ</span></li>
+                  <li className="flex items-center gap-2 text-slate-400"><Lock className="w-3.5 h-3.5 text-slate-400 shrink-0"/> <span>គ្មានមុខងារស្កេន QR Code ចុះឈ្មោះ</span></li>
+                </ul>
+                
+                <button 
+                  onClick={() => { selectPlan('trial'); showNotification('គណនីរបស់អ្នកបានកំណត់ជាគម្រោងសាកល្បង!', 'info'); }}
+                  className="w-full py-2.5 rounded-xl border border-rose-500 text-rose-600 hover:bg-rose-50 font-bold transition text-xs text-center cursor-pointer active:scale-95 duration-100"
+                >
+                  ជ្រើសរើស Trial ដោយឥតគិតថ្លៃ
+                </button>
+              </div>
+
+              {/* Card 2: Premium Plan */}
+              <div className="bg-white border-2 border-rose-500 rounded-2xl p-5 shadow-[0_8px_20px_rgba(244,63,94,0.06)] relative overflow-hidden">
+                <div className="absolute top-0 right-0 bg-rose-500 text-white text-[8px] font-bold px-2 py-0.5 rounded-bl-lg uppercase tracking-wider">ពេញនិយម</div>
+                
+                <div className="flex justify-between items-start">
+                  <div>
+                    <div className="flex items-center space-x-1">
+                      <h3 className="text-sm font-black text-rose-600">Premium Pro</h3>
+                      <span className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse"></span>
+                    </div>
+                    <p className="text-[10px] text-slate-400 mt-0.5">ដោះសោរគ្រប់មុខងារជាន់ខ្ពស់ទាំងអស់</p>
+                  </div>
+                  <span className="text-xl font-black text-slate-950">$14.99</span>
+                </div>
+                
+                <div className="my-3.5 h-px bg-rose-100" />
+                
+                <ul className="space-y-2 text-[11px] text-slate-700 font-semibold mb-4">
+                  <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-rose-500 shrink-0"/> <span>បង្កើតកម្មវិធី និងភ្ញៀវចូលរួមមិនកំណត់</span></li>
+                  <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-rose-500 shrink-0"/> <span className="text-rose-700">ស្កេន QR Code ចុះឈ្មោះចូលតុស្វ័យប្រវត្ត</span></li>
+                  <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-rose-500 shrink-0"/> <span>របាយការណ៍ហិរញ្ញវត្ថុ (Analytics)</span></li>
+                  <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-rose-500 shrink-0"/> <span>តភ្ជាប់ Telegram Bot ផ្ញើដំណឹងរាល់ការ Check-in</span></li>
+                </ul>
+                
+                <button 
+                  onClick={() => { selectPlan('premium'); showNotification('អបអរសាទរ! គណនីរបស់អ្នកបានក្លាយជា Premium!', 'success'); }}
+                  className="w-full py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-bold transition text-xs text-center cursor-pointer flex items-center justify-center space-x-1.5 active:scale-95 duration-100"
+                >
+                  <Unlock className="w-3.5 h-3.5" />
+                  <span>អាប់ហ្គ្រេតជា Premium Pro</span>
+                </button>
+              </div>
+            </div>
+
+            <div className="mt-6 text-center space-y-2 max-w-xs mx-auto">
+              <div className="flex items-center justify-center space-x-2.5 opacity-80">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Mastercard_logo.svg/1200px-Mastercard_logo.svg.png" className="h-4.5" alt="Mastercard" />
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Former_Visa_%28company%29_logo.svg/1280px-Former_Visa_%28company%29_logo.svg.png" className="h-4.5" alt="Visa" />
+                <div className="h-4 w-px bg-slate-300"></div>
+                <span className="text-[9px] text-slate-400 font-medium">Stripe SECURE</span>
+              </div>
+              {saasSession && (
+                <button
+                  onClick={() => setMobileActiveView('home')}
+                  className="text-[10px] text-slate-400 hover:text-rose-500 mt-2 font-bold transition block mx-auto underline cursor-pointer"
+                >
+                  ត្រឡប់ទៅផែនទី/ទំព័រដើមជាបណ្តោះអាសន្ន
+                </button>
+              )}
+            </div>
           </div>
         )}
 
