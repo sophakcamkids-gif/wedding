@@ -557,8 +557,8 @@ const calculateKHQR_CRC16 = (str: string): string => {
 };
 
 const SOPHAK_KHQR_Card = () => {
-  // Use the exact genuine QR payload retrieved from the high-resolution ACLEDA KHQR image provided by the user
-  const khqrStr = "00020101021229300016KH317203248380480106aclbkh520459995303840540514.995802KH5912PHORN SOPHAK6010PHNOM PENH6304D7EE";
+  // Use the exact genuine QR payload retrieved from the high-resolution ABA KHQR image provided by the user
+  const khqrStr = "00020101021229450016abaakhppxxx@abaa01090005029570208ABA Bank40390006abaP2P011241FE56D504980209000502957520400005303840540514.995802KH5912PHORN SOPHAK6010Phnom Penh993400131780449025422011318119850254226304C217";
 
   return (
     <div className="w-full max-w-[280px] mx-auto bg-white rounded-3xl p-0 shadow-xl border border-slate-150 font-sans select-none relative overflow-hidden animate-fade-in text-center my-4">
@@ -592,17 +592,22 @@ const SOPHAK_KHQR_Card = () => {
             fgColor="#000000"
             bgColor="#ffffff"
           />
-          {/* Centered ACLEDA style Red Circle Logo Emblem with custom graphic overlay */}
+          {/* Centered Bakong style Red Circle Logo Emblem with custom floral overlay */}
           <div className="absolute inset-0 flex items-center justify-center">
             <div className="w-10 h-10 bg-[#df1b23] rounded-full border-4 border-white flex items-center justify-center shadow-md">
-              {/* White Stylized ACLEDA flower logo */}
-              <svg className="w-5.5 h-5.5 text-white" viewBox="0 0 100 100" fill="currentColor">
-                <circle cx="50" cy="50" r="16" fill="none" stroke="currentColor" strokeWidth="6" />
-                <path d="M50 15 L58 35 L50 45 L42 35 Z" />
-                <path d="M50 85 L58 65 L50 55 L42 65 Z" />
-                <path d="M15 50 L35 58 L45 50 L35 42 Z" />
-                <path d="M85 50 L65 58 L55 50 L65 42 Z" />
-                <circle cx="50" cy="50" r="6" fill="currentColor" />
+              {/* White Stylized Bakong style flower logo */}
+              <svg className="w-6 h-6 text-white" viewBox="0 0 100 100" fill="currentColor">
+                <circle cx="50" cy="50" r="14" fill="#df1b23" />
+                <path d="M50 20 c1 3 3 5 4 1 s3-5 4 1 s-1 7-4 7 s-4-5-4-9 z" fill="#fff" />
+                <path d="M50 80 c1-3 3-5 4-1 s3 5 4-1 s-1-7-4-7 s-4 5-4 9 z" fill="#fff" />
+                <path d="M20 50 c3 1 5 3 1 4 s-5 3 1 4 s7-1 7-4 s-5-4-9-4 z" fill="#fff" />
+                <path d="M80 50 c-3 1 -5 3 -1 4 s5 3 -1 4 s-7-1 -7-4 s5-4 9-4 z" fill="#fff" />
+                <path d="M29 29 c2 2 4 1 3-1 s-1-5 1-4 s4 3 2 5 s-3 2-6 0 z" fill="#fff" />
+                <path d="M71 71 c-2-2-4-1-3 1 s1 5-1 4 s-4-3-2-5 s3-2 6 0 z" fill="#fff" />
+                <path d="M71 29 c-2 2 -1 4 1 3 s5-1 4 1 s-3 4 -5 2 s-2-3 0-6 z" fill="#fff" />
+                <path d="M29 71 c2-2 1-4-1-3 s-5 1-4-1 s3-4 5-2 s2 3 0 6 z" fill="#fff" />
+                <circle cx="50" cy="50" r="7" fill="#fff" />
+                <circle cx="50" cy="50" r="4.5" fill="#df1b23" />
               </svg>
             </div>
           </div>
