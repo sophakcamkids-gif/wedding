@@ -5271,10 +5271,10 @@ export default function App() {
                     ) : (
                       <table className="w-full text-left text-xs text-slate-600" id="tbl-admin-guests">
                         <thead className="bg-[#fff9f9] text-slate-700 uppercase tracking-wider text-[11px] border-b border-rose-50">
-                 <tr>
+                          <tr>
                             <th className="px-5 py-3.5">ភ្ញៀវកិត្តិយស</th>
                             <th className="px-5 py-3.5">ទូរស័ព្ទ / ទំនាក់ទំនង</th>
-                            <th className="px-5 py-3.5">អ្នករួមដំណើរ (នាក់)</th>
+                            <th className="px-5 py-3.5 flex items-center justify-center">អ្នករួមដំណើរ (នាក់)</th>
                             <th className="px-5 py-3.5">ប្រាក់ចងដៃ ($)</th>
                             <th className="px-5 py-3.5">កំណត់សម្គាល់</th>
                             <th className="px-5 py-3.5 text-center">ស្ថានភាព</th>
@@ -5350,7 +5350,7 @@ export default function App() {
                                     title={g.is_present ? "លុបវត្តមាន" : "កត់ត្រាវត្តមាន (ចូលតុ)"}
                                     id={`btn-presence-${g.id}`}
                                   >
-                                    <UserCheck className={`w-3.5 h-3.5 ${g.is_present ? 'text-slate-450' : 'text-sky-500'}`} />
+                                    <UserCheck className={`w-3.5 h-3.5 ${g.is_present ? 'text-slate-400' : 'text-sky-500'}`} />
                                     <span>{g.is_present ? 'ចាកចេញ' : 'ចូលតុ'}</span>
                                   </button>
 
@@ -5594,60 +5594,60 @@ export default function App() {
                  <p className="text-slate-500 mb-10 max-w-lg mx-auto text-[15px] leading-relaxed">បង្កើនគុណភាពនៃការគ្រប់គ្រងលើការរៀបចំពិធីមង្គលការ ឬព្រឹត្តិការណ៍របស់អ្នកកាន់តែទំនើប សុវត្ថិភាព និងចំណេញពេលវេលាជាងមុន។</p>
                  
                  <div className="grid md:grid-cols-2 gap-6 xl:gap-8 max-w-3xl mx-auto text-left relative">
-                   
-                   {/* Free/Basic Plan */}
-                   <div className="border border-slate-200 rounded-3xl p-8 hover:border-slate-300 hover:shadow-lg transition-all duration-300 md:translate-y-4 md:scale-95 bg-white relative z-0 flex flex-col group">
-                      <h3 className="text-xl font-bold tracking-tight text-slate-800">កញ្ចប់សាកល្បង (Basic)</h3>
-                      <p className="text-xs text-slate-500 mt-1">សម្រាប់កម្មវិធីតូចតាច លក្ខណៈគ្រួសារ</p>
-                      <div className="mt-6 flex items-baseline">
-                        <span className="text-4xl font-extrabold tracking-tight text-slate-900">$0</span>
-                        <span className="text-sm font-medium text-slate-500 ml-1">/ កម្មវិធី</span>
-                      </div>
-                      
-                      <div className="my-8 h-px bg-slate-100 w-full" />
-                      
-                      <ul className="mb-8 space-y-4 flex-1 text-sm text-slate-600">
-                        <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"/> <span>មុខងារទាញយកបញ្ជីភ្ញៀវចូលតុ</span></li>
-                        <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"/> <span>កំណត់ចំណងជើងកម្មវិធីបាន 1</span></li>
-                        <li className="flex gap-3 items-start opacity-60"><Lock className="w-5 h-5 text-slate-400 shrink-0 mt-0.5"/> <span>គ្មានមុខងារស្កេន QR Code ចុះឈ្មោះ</span></li>
-                        <li className="flex gap-3 items-start opacity-60"><Lock className="w-5 h-5 text-slate-400 shrink-0 mt-0.5"/> <span>គ្មានទិន្នន័យចំណងដៃ (Gift Analytics)</span></li>
-                      </ul>
-                      
-                      <button onClick={() => setHasPaidPlan(true)} className="mt-auto py-3.5 rounded-xl border border-slate-200 font-bold text-slate-700 hover:bg-slate-50 transition-colors w-full cursor-pointer">ជ្រើសរើស Basic ដោយឥតគិតថ្លៃ</button>
-                   </div>
-                   
-                   {/* Premium SaaS Plan */}
-                   <div className="border-2 border-rose-500 bg-rose-50/10 rounded-3xl p-8 shadow-[0_8px_30px_rgb(244,63,94,0.12)] flex flex-col relative z-10 transform scale-100 origin-bottom bg-white overflow-hidden">
-                      <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-pink-500 via-rose-500 to-rose-600"></div>
-                      <div className="absolute top-0 right-0 bg-rose-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider shadow-sm">សំណព្វចិត្ត (Popular)</div>
-                      
-                      <div className="flex items-center space-x-2 mt-2">
-                        <h3 className="text-xl font-extrabold tracking-tight text-rose-600">Premium Pro</h3>
-                        <span className="flex w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
-                      </div>
-                      <p className="text-xs text-slate-500 mt-1">ដោះសោរគ្រប់មុខងារជាន់ខ្ពស់ទាំងអស់</p>
-                      
-                      <div className="mt-6 flex items-baseline">
-                        <span className="text-4xl font-extrabold tracking-tight text-slate-900">$29</span>
-                        <span className="text-sm font-medium text-slate-500 ml-1">/ កម្មវិធី</span>
-                      </div>
-                      
-                      <div className="my-8 h-px bg-rose-100 w-full" />
-                      
-                      <ul className="mb-8 space-y-4 flex-1 text-sm text-slate-700 font-medium">
-                        <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5"/> <span>ទិន្នន័យបញ្ជីឈ្មោះ និងកត់ចំនងដៃគ្មានកំណត់</span></li>
-                        <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5"/> <span><strong>មុខងារស្កេន QR Code ចុះឈ្មោះចូលតុស្វ័យប្រវត្ត</strong></span></li>
-                        <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5"/> <span>របាយការណ៍ហិរញ្ញវត្ថុ (Analytics Dashboards)</span></li>
-                        <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5"/> <span>តភ្ជាប់ Telegram Bot ផ្ញើដំណឹងរាល់ការ Check-in</span></li>
-                      </ul>
-                      
-                      <button onClick={() => { setHasPaidPlan(true); showNotification('អបអរសាទរ! គណនីរបស់អ្នកបានក្លាយជា Premium!', 'success'); }} className="mt-auto py-3.5 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white shadow-lg font-bold hover:-translate-y-0.5 transition-all w-full cursor-pointer flex items-center justify-center space-x-2">
-                        <Unlock className="w-4 h-4" />
-                        <span>អាប់ហ្គ្រេតគម្រោងរបស់ខ្ញុំ (Upgrade)</span>
-                      </button>
-                   </div>
-                   
-                 </div>
+                    
+                    {/* Free/Basic Plan */}
+                    <div className="border border-slate-200 rounded-3xl p-8 hover:border-slate-300 hover:shadow-lg transition-all duration-300 md:translate-y-4 md:scale-95 bg-white relative z-0 flex flex-col group">
+                       <h3 className="text-xl font-bold tracking-tight text-slate-800">កញ្ចប់សាកល្បង (Trial)</h3>
+                       <p className="text-xs text-slate-500 mt-1">សម្រាប់កម្មវិធីតូចតាច ឬសាកល្បងប្រព័ន្ធ</p>
+                       <div className="mt-6 flex items-baseline">
+                         <span className="text-4xl font-extrabold tracking-tight text-slate-900">$0</span>
+                         <span className="text-sm font-medium text-slate-500 ml-1">/ កម្មវិធី</span>
+                       </div>
+                       
+                       <div className="my-8 h-px bg-slate-100 w-full" />
+                       
+                       <ul className="mb-8 space-y-4 flex-1 text-sm text-slate-600">
+                         <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"/> <span>បាន ១ កម្មវិធី (Maximum 1 Event)</span></li>
+                         <li className="flex gap-3 items-start font-semibold text-rose-600"><CheckCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5"/> <span>ភ្ញៀវចូលរួមក្រោម ១០០ នាក់ (Under 100 Guests)</span></li>
+                         <li className="flex gap-3 items-start font-semibold text-slate-700"><CheckCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"/> <span>ទទួលបានរបាយការណ៍ហិរញ្ញវត្ថុ (Analytics Dashboard)</span></li>
+                         <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"/> <span>មុខងារទាញយកបញ្ជីភ្ញៀវចូលតុ</span></li>
+                         <li className="flex gap-3 items-start opacity-60"><Lock className="w-5 h-5 text-slate-400 shrink-0 mt-0.5"/> <span>គ្មានមុខងារស្កេន QR Code ចុះឈ្មោះ</span></li>
+                       </ul>
+                       
+                       <button onClick={() => { selectPlan('trial'); showNotification('គណនីរបស់អ្នកបានកំណត់ជាគម្រោងសាកល្បង!', 'info'); }} className="mt-auto py-3.5 rounded-xl border border-slate-200 font-bold text-slate-700 hover:bg-slate-50 transition-colors w-full cursor-pointer text-center">ជ្រើសរើស Trial ដោយឥតគិតថ្លៃ</button>
+                    </div>
+                    
+                    {/* Premium SaaS Plan */}
+                    <div className="border-2 border-rose-500 bg-rose-50/10 rounded-3xl p-8 shadow-[0_8px_30px_rgb(244,63,94,0.12)] flex flex-col relative z-10 transform scale-100 origin-bottom bg-white overflow-hidden">
+                       <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-pink-500 via-rose-500 to-rose-600"></div>
+                       <div className="absolute top-0 right-0 bg-rose-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider shadow-sm">សំណព្វចិត្ត (Popular)</div>
+                       
+                       <div className="flex items-center space-x-2 mt-2">
+                         <h3 className="text-xl font-extrabold tracking-tight text-rose-600">Premium Pro</h3>
+                         <span className="flex w-2.5 h-2.5 rounded-full bg-rose-500 animate-pulse"></span>
+                       </div>
+                       <p className="text-xs text-slate-500 mt-1">ដោះសោរគ្រប់មុខងារជាន់ខ្ពស់ទាំងអស់</p>
+                       
+                       <div className="mt-6 flex items-baseline">
+                         <span className="text-4xl font-extrabold tracking-tight text-slate-900">$14.99</span>
+                         <span className="text-sm font-medium text-slate-500 ml-1">/ កម្មវិធី</span>
+                       </div>
+                       
+                       <div className="my-8 h-px bg-rose-100 w-full" />
+                       
+                       <ul className="mb-8 space-y-4 flex-1 text-sm text-slate-700 font-medium">
+                         <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5"/> <span>បង្កើតកម្មវិធី និងភ្ញៀវចូលរួមមិនកំណត់</span></li>
+                         <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5"/> <span><strong>មុខងារស្កេន QR Code ចុះឈ្មោះចូលតុស្វ័យប្រវត្ត</strong></span></li>
+                         <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5"/> <span>របាយការណ៍ហិរញ្ញវត្ថុ (Analytics Dashboards)</span></li>
+                         <li className="flex gap-3 items-start"><CheckCircle className="w-5 h-5 text-rose-500 shrink-0 mt-0.5"/> <span>តភ្ជាប់ Telegram Bot ផ្ញើដំណឹងរាល់ការ Check-in</span></li>
+                       </ul>
+                       
+                       <button onClick={() => { selectPlan('premium'); showNotification('អបអរសាទរ! គណនីរបស់អ្នកបានក្លាយជា Premium!', 'success'); }} className="mt-auto py-3.5 rounded-xl bg-gradient-to-r from-rose-500 to-rose-600 hover:from-rose-600 hover:to-rose-700 text-white shadow-lg font-bold hover:-translate-y-0.5 transition-all w-full cursor-pointer flex items-center justify-center space-x-2">
+                         <Unlock className="w-4 h-4" />
+                         <span>អាប់ហ្គ្រេតគម្រោងរបស់ខ្ញុំ (Upgrade)</span>
+                       </button>
+                    </div>
+                  </div>
                  
                  <div className="mt-8 pt-6 border-t border-slate-100 max-w-xl mx-auto flex items-center justify-center space-x-4">
                     <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Mastercard_logo.svg/1200px-Mastercard_logo.svg.png" className="h-6" alt="Mastercard" />
