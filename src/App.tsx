@@ -3036,24 +3036,24 @@ export default function App() {
     const formattedTotalKHR = stats.totalGiftMoneyKHR.toLocaleString('km-KH');
 
     return (
-      <div className="min-h-screen bg-[#0d213a] text-slate-100 flex flex-col font-sans select-none overflow-x-hidden relative pb-20">
+      <div className="min-h-screen bg-gradient-to-b from-[#fdfcfe] via-[#faf9f6] to-[#f4f3ed] text-slate-800 flex flex-col font-sans select-none overflow-x-hidden relative pb-20">
         
-        {/* iOS style top status bar */}
-        <div className="bg-[#0d213a] px-5 py-2 flex justify-between items-center text-xs font-semibold text-white/95 tracking-wide shrink-0">
-          <span>{mobileTime}</span>
+        {/* iOS style top status bar (Bright style) */}
+        <div className="bg-white/80 backdrop-blur-md px-5 py-2 flex justify-between items-center text-xs font-bold text-slate-700 tracking-wide shrink-0">
+          <span className="text-sm font-extrabold">{mobileTime}</span>
           <div className="flex items-center space-x-1.5">
             {/* Signal icons */}
-            <svg className="w-4 h-4 fill-current text-white" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/><circle cx="12" cy="12" r="3"/></svg>
-            <span className="text-[10px]">5G</span>
-            <svg className="w-5 h-5 fill-current text-white/90" viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.34V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
+            <svg className="w-4 h-4 fill-current text-slate-600" viewBox="0 0 24 24"><path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9-4.03-9-9-9zm0 15c-3.31 0-6-2.69-6-6s2.69-6 6-6 6 2.69 6 6-2.69 6-6 6z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span className="text-xs font-bold font-mono">5G</span>
+            <svg className="w-5 h-5 fill-current text-slate-600" viewBox="0 0 24 24"><path d="M15.67 4H14V2h-4v2H8.33C7.6 4 7 4.6 7 5.33v15.33C7 21.4 7.6 22 8.33 22h7.33c.74 0 1.34-.6 1.34-1.34V5.33C17 4.6 16.4 4 15.67 4z"/></svg>
           </div>
         </div>
 
-        {/* ACLEDA Bank style Header */}
-        <header className="px-5 py-3 flex justify-between items-center bg-[#0d213a] border-b border-[#142c48] shrink-0">
-          <div className="flex items-center space-x-2">
+        {/* Lux bright style Header */}
+        <header className="px-5 py-4 flex justify-between items-center bg-white border-b border-slate-200/80 shadow-xs shrink-0">
+          <div className="flex items-center space-x-2.5">
             {/* Original Wedding App logo inside high-fidelity container */}
-            <div className="relative w-9 h-9 bg-white rounded-full flex items-center justify-center shadow-md overflow-hidden shrink-0">
+            <div className="relative w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-md border border-amber-100 overflow-hidden shrink-0">
               <img 
                 src="https://i.ibb.co/4nVwkfZD/Gemini-Generated-Image-uk0xwruk0xwruk0x.png" 
                 referrerPolicy="no-referrer" 
@@ -3062,20 +3062,20 @@ export default function App() {
               />
             </div>
             <div className="text-left leading-none">
-              <span className="block text-[11px] font-black tracking-wider text-amber-400">គ្រប់គ្រងភ្ញៀវចូលរួមកម្មវិធី</span>
-              <span className="text-[8px] uppercase font-bold text-slate-400 font-mono tracking-widest block mt-0.5">GUEST MANAGEMENT SYSTEM</span>
+              <span className="block text-sm font-black tracking-wider text-rose-600">គ្រប់គ្រងភ្ញៀវចូលរួមកម្មវិធី</span>
+              <span className="text-[9px] uppercase font-bold text-slate-500 font-mono tracking-wider block mt-1">GUEST MANAGEMENT SYSTEM</span>
             </div>
           </div>
 
           <div className="flex items-center space-x-3">
             {/* Active app profile status */}
-            <div className="bg-[#142c48]/60 px-2.5 py-1 rounded-full border border-slate-700/30 flex items-center space-x-1.5">
-              <span className={`w-2 h-2 rounded-full ${connectionMode === 'supabase' && supabaseConnected ? 'bg-emerald-500 animate-pulse' : 'bg-orange-400'}`}></span>
-              <span className="text-[9px] font-bold uppercase tracking-wider text-slate-300">{connectionMode}</span>
+            <div className="bg-rose-50/80 px-3 py-1.5 rounded-full border border-rose-100 flex items-center space-x-1.5">
+              <span className={`w-2.5 h-2.5 rounded-full ${connectionMode === 'supabase' && supabaseConnected ? 'bg-emerald-500 animate-pulse' : 'bg-orange-500'}`}></span>
+              <span className="text-[10px] font-black uppercase tracking-wider text-rose-700">{connectionMode}</span>
             </div>
 
             {/* Notification bell */}
-            <button className="relative p-1.5 text-slate-300 hover:text-white rounded-full bg-[#142c48]/50 border border-slate-700/20" onClick={() => showNotification('គ្មានសារដំណឹងថ្មីទេ!', 'info')}>
+            <button className="relative p-2 text-slate-600 hover:text-rose-600 rounded-xl bg-slate-50 border border-slate-200/60 transition" onClick={() => showNotification('គ្មានសារដំណឹងថ្មីទេ!', 'info')}>
               <Bell className="w-4 h-4" />
               <span className="absolute top-1 right-1 w-2 h-2 bg-rose-600 rounded-full"></span>
             </button>
@@ -3084,7 +3084,7 @@ export default function App() {
             {connectionMode === 'supabase' && saasSession ? (
               <button 
                 onClick={handleSaaSSignOut} 
-                className="p-1.5 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-lg shadow transition border border-rose-500/20"
+                className="p-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-xl shadow transition border border-rose-500/20"
                 title="ចាកចេញ (Sign Out)"
               >
                 <LogOut className="w-4 h-4" />
@@ -3105,7 +3105,7 @@ export default function App() {
                     showNotification('បានប្តូរទៅកាន់ទំព័រភ្ញៀវ (Guest View)', 'success');
                   }
                 }}
-                className="p-1.5 bg-[#e52e40] hover:bg-red-600 active:bg-red-700 text-white rounded-lg shadow-md shadow-red-600/30 transition border border-red-500/20"
+                className="p-2 bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white rounded-xl shadow-md shadow-rose-600/30 transition border border-rose-500/20"
                 title="ប្តូរតួនាទី"
               >
                 <UserCheck className="w-4 h-4 stroke-[2.5]" />
@@ -3115,13 +3115,13 @@ export default function App() {
         </header>
 
         {/* Dynamic Wedding selector marquee banner */}
-        <div className="bg-[#132c4a]/50 py-2.5 px-4 flex items-center justify-between border-b border-[#142c48] text-xs">
-          <div className="flex items-center space-x-2 w-full">
-            <Heart className="w-4 h-4 text-rose-500 fill-rose-500 shrink-0" />
+        <div className="bg-[#faf6eb] py-3.5 px-5 flex items-center justify-between border-b border-[#ebdcb9] text-sm">
+          <div className="flex items-center space-x-2.5 w-full">
+            <Heart className="w-4.5 h-4.5 text-rose-500 fill-rose-400 shrink-0" />
             <div className="flex-1 text-left font-semibold">
-              <span className="text-[10px] text-slate-400 block tracking-tight uppercase">Active Event / កម្មវិធីសកម្ម</span>
+              <span className="text-[10px] text-amber-800 font-extrabold block tracking-normal uppercase">Active Event / កម្មវិធីសកម្ម</span>
               {weddings.length === 0 ? (
-                <span className="text-amber-400">គ្មានកម្មវិធីសកម្ម</span>
+                <span className="text-rose-600 font-black text-sm">គ្មានកម្មវិធីសកម្ម</span>
               ) : (
                 <select
                   value={selectedWeddingId}
@@ -3129,10 +3129,10 @@ export default function App() {
                     setSelectedWeddingId(e.target.value);
                     setRegistrationSuccess(false);
                   }}
-                  className="bg-transparent text-amber-300 font-bold focus:outline-none cursor-pointer w-full text-xs py-0.5"
+                  className="bg-transparent text-rose-600 font-black focus:outline-none cursor-pointer w-full text-sm py-0.5"
                 >
                   {weddings.map((w) => (
-                    <option key={w.id} value={w.id} className="bg-[#0d213a] text-slate-100">{w.title}</option>
+                    <option key={w.id} value={w.id} className="bg-white text-slate-800">{w.title}</option>
                   ))}
                 </select>
               )}
@@ -3144,32 +3144,32 @@ export default function App() {
         {/* GUEST VIEW PORTAL (HOME HUB) */}
         {/* ========================================= */}
         {mobileActiveView === 'home' && (
-          <div className="flex-1 flex flex-col p-4 space-y-5 overflow-y-auto">
+          <div className="flex-1 flex flex-col p-4.5 space-y-6 overflow-y-auto">
             
-            {/* Grid 3x3 layout of primary services */}
-            <div className="bg-[#09182a] border border-[#142d4a] rounded-2xl overflow-hidden shadow-2xl">
-              <div className="grid grid-cols-3 gap-0 divide-x divide-y divide-[#142d4a]">
+            {/* Grid 3x3 layout of primary services (Stunning bright card theme) */}
+            <div className="bg-white border border-slate-200/80 rounded-2xl overflow-hidden shadow-lg shadow-slate-200/60">
+              <div className="grid grid-cols-3 gap-0 divide-x divide-y divide-slate-100">
                 
                 {/* 1. Send Gift (វេលុយចងដៃ) */}
                 <button 
                   onClick={() => setMobileActiveView('khqr')}
-                  className="flex flex-col items-center justify-center py-7 px-2 active:bg-[#112d4d]/80 transition text-center space-y-3"
+                  className="flex flex-col items-center justify-center py-7.5 px-2 active:bg-rose-50/50 transition text-center space-y-3"
                 >
-                  <div className="w-11 h-11 bg-rose-500/10 text-rose-400 rounded-2xl flex items-center justify-center border border-rose-500/20">
+                  <div className="w-12 h-12 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center border border-rose-100 shadow-sm">
                     <Wallet className="w-6 h-6 stroke-[2]" />
                   </div>
-                  <span className="text-xs font-bold tracking-tight text-slate-200">វេលុយចងដៃ</span>
+                  <span className="text-sm font-black tracking-tight text-slate-800">វេលុយចងដៃ</span>
                 </button>
 
                 {/* 2. Phone Topup -> Mapped to Register Guest */}
                 <button 
                   onClick={() => setMobileActiveView('register')}
-                  className="flex flex-col items-center justify-center py-7 px-2 active:bg-[#112d4d]/80 transition text-center space-y-3"
+                  className="flex flex-col items-center justify-center py-7.5 px-2 active:bg-rose-50/50 transition text-center space-y-3"
                 >
-                  <div className="w-11 h-11 bg-amber-500/10 text-amber-400 rounded-2xl flex items-center justify-center border border-amber-500/20">
+                  <div className="w-12 h-12 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center border border-amber-100 shadow-sm">
                     <UserPlus className="w-6 h-6 stroke-[2]" />
                   </div>
-                  <span className="text-xs font-bold tracking-tight text-slate-200">ចុះឈ្មោះភ្ញៀវ</span>
+                  <span className="text-sm font-black tracking-tight text-slate-800">ចុះឈ្មោះភ្ញៀវ</span>
                 </button>
 
                 {/* 3. Transfer -> Mapped to Guest List */}
@@ -3179,12 +3179,12 @@ export default function App() {
                       setMobileActiveView('list');
                     });
                   }}
-                  className="flex flex-col items-center justify-center py-7 px-2 active:bg-[#112d4d]/80 transition text-center space-y-3"
+                  className="flex flex-col items-center justify-center py-7.5 px-2 active:bg-rose-50/50 transition text-center space-y-3"
                 >
-                  <div className="w-11 h-11 bg-sky-500/10 text-sky-400 rounded-2xl flex items-center justify-center border border-sky-500/20">
+                  <div className="w-12 h-12 bg-sky-50 text-sky-600 rounded-2xl flex items-center justify-center border border-sky-100 shadow-sm">
                     <Users className="w-6 h-6 stroke-[2]" />
                   </div>
-                  <span className="text-xs font-bold tracking-tight text-slate-200">បញ្ជីរាយនាម</span>
+                  <span className="text-sm font-black tracking-tight text-slate-800">បញ្ជីរាយនាម</span>
                 </button>
 
                 {/* 4. Cards -> guest's QR card */}
@@ -3198,12 +3198,12 @@ export default function App() {
                       setMobileActiveView('register');
                     }
                   }}
-                  className="flex flex-col items-center justify-center py-7 px-2 active:bg-[#112d4d]/80 transition text-center space-y-3"
+                  className="flex flex-col items-center justify-center py-7.5 px-2 active:bg-rose-50/50 transition text-center space-y-3"
                 >
-                  <div className="w-11 h-11 bg-purple-500/10 text-purple-400 rounded-2xl flex items-center justify-center border border-purple-500/20">
+                  <div className="w-12 h-12 bg-purple-50 text-purple-600 rounded-2xl flex items-center justify-center border border-purple-100 shadow-sm">
                     <CreditCard className="w-6 h-6 stroke-[2]" />
                   </div>
-                  <span className="text-xs font-bold tracking-tight text-slate-200">ប័ណ្ណ / QR ខ្ញុំ</span>
+                  <span className="text-sm font-black tracking-tight text-slate-800">ប័ណ្ណ / QR ខ្ញុំ</span>
                 </button>
 
                 {/* 5. Accounts -> Admin mode login panel (now 5th item) */}
@@ -3215,12 +3215,12 @@ export default function App() {
                       showNotification('ផ្ទាំងគ្រប់គ្រងត្រូវបានបើក!', 'success');
                     });
                   }}
-                  className="flex flex-col items-center justify-center py-7 px-2 active:bg-[#112d4d]/80 transition text-center space-y-3"
+                  className="flex flex-col items-center justify-center py-7.5 px-2 active:bg-rose-50/50 transition text-center space-y-3"
                 >
-                  <div className="w-11 h-11 bg-indigo-500/10 text-indigo-400 rounded-2xl flex items-center justify-center border border-indigo-500/20">
+                  <div className="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center border border-indigo-100 shadow-sm">
                     <UserCheck className="w-6 h-6 stroke-[2]" />
                   </div>
-                  <span className="text-xs font-bold tracking-tight text-slate-200">ផ្ទាំងគ្រប់គ្រង</span>
+                  <span className="text-sm font-black tracking-tight text-slate-800">ផ្ទាំងគ្រប់គ្រង</span>
                 </button>
 
                 {/* 6. Deposits -> Events stats & summary (now 6th item) */}
@@ -3230,90 +3230,90 @@ export default function App() {
                       setMobileActiveView('bonds');
                     });
                   }}
-                  className="flex flex-col items-center justify-center py-7 px-2 active:bg-[#112d4d]/80 transition text-center space-y-3"
+                  className="flex flex-col items-center justify-center py-7.5 px-2 active:bg-rose-50/50 transition text-center space-y-3"
                 >
-                  <div className="w-11 h-11 bg-teal-500/10 text-teal-400 rounded-2xl flex items-center justify-center border border-teal-500/20">
+                  <div className="w-12 h-12 bg-teal-50 text-teal-600 rounded-2xl flex items-center justify-center border border-teal-100 shadow-sm">
                     <TrendingUp className="w-6 h-6 stroke-[2]" />
                   </div>
-                  <span className="text-xs font-bold tracking-tight text-slate-200">ស្ថិតិកម្មវិធី</span>
+                  <span className="text-sm font-black tracking-tight text-slate-800">ស្ថិតិកម្មវិធី</span>
                 </button>
 
               </div>
             </div>
 
             {/* Public Service Mini Grid Headers */}
-            <div className="text-left space-y-3.5">
+            <div className="text-left space-y-4">
               <div className="flex justify-between items-center px-1">
-                <h3 className="text-sm font-black text-slate-200">សេវាសាធារណៈ (Public Services)</h3>
+                <h3 className="text-base font-extrabold text-slate-800 tracking-wide">សេវាសាធារណៈ (Public Services)</h3>
                 <ChevronRight className="w-5 h-5 text-slate-400" />
               </div>
 
               <div className="grid grid-cols-4 gap-4">
                 
-                <button onClick={() => setMobilePopup('invite')} className="flex flex-col items-center space-y-1.5 group select-none">
-                  <div className="w-12 h-12 rounded-full bg-[#152e4d] border border-slate-700/30 flex items-center justify-center shadow-md active:bg-[#1a385a] transition">
-                    <FileText className="w-5 h-5 text-rose-400" />
+                <button onClick={() => setMobilePopup('invite')} className="flex flex-col items-center space-y-2 group select-none cursor-pointer">
+                  <div className="w-13 h-13 rounded-full bg-white border border-slate-200/80 flex items-center justify-center shadow-md active:bg-rose-50/40 transition">
+                    <FileText className="w-6 h-6 text-rose-500" />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-300">កាតអញ្ជើញ</span>
+                  <span className="text-xs font-black text-slate-700">កាតអញ្ជើញ</span>
                 </button>
 
-                <button onClick={() => setMobilePopup('bridegroom')} className="flex flex-col items-center space-y-1.5 group select-none">
-                  <div className="w-12 h-12 rounded-full bg-[#152e4d] border border-slate-700/30 flex items-center justify-center shadow-md active:bg-[#1a385a] transition">
-                    <Heart className="w-5 h-5 text-pink-400" />
+                <button onClick={() => setMobilePopup('bridegroom')} className="flex flex-col items-center space-y-2 group select-none cursor-pointer">
+                  <div className="w-13 h-13 rounded-full bg-white border border-slate-200/80 flex items-center justify-center shadow-md active:bg-rose-50/40 transition">
+                    <Heart className="w-6 h-6 text-pink-500" />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-300">សមាសភាព</span>
+                  <span className="text-xs font-black text-slate-700">សមាសភាព</span>
                 </button>
 
                 <a 
                   href="https://maps.google.com" 
                   target="_blank" 
                   rel="noopener noreferrer"
-                  className="flex flex-col items-center space-y-1.5 group select-none"
+                  className="flex flex-col items-center space-y-2 group select-none cursor-pointer"
                 >
-                  <div className="w-12 h-12 rounded-full bg-[#152e4d] border border-slate-700/30 flex items-center justify-center shadow-md active:bg-[#1a385a] transition">
-                    <MapPin className="w-5 h-5 text-amber-400" />
+                  <div className="w-13 h-13 rounded-full bg-white border border-slate-200/80 flex items-center justify-center shadow-md active:bg-rose-50/40 transition">
+                    <MapPin className="w-6 h-6 text-amber-500" />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-300">ទីតាំងផែនទី</span>
+                  <span className="text-xs font-black text-slate-700">ទីតាំងផែនទី</span>
                 </a>
 
-                <button onClick={() => setMobilePopup('food')} className="flex flex-col items-center space-y-1.5 group select-none">
-                  <div className="w-12 h-12 rounded-full bg-[#152e4d] border border-slate-700/30 flex items-center justify-center shadow-md active:bg-[#1a385a] transition">
-                    <Sparkles className="w-5 h-5 text-yellow-400" />
+                <button onClick={() => setMobilePopup('food')} className="flex flex-col items-center space-y-2 group select-none cursor-pointer">
+                  <div className="w-13 h-13 rounded-full bg-white border border-slate-200/80 flex items-center justify-center shadow-md active:bg-rose-50/40 transition">
+                    <Sparkles className="w-6 h-6 text-yellow-500" />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-300">ម៉ឺនុយម្ហូប</span>
+                  <span className="text-xs font-black text-slate-700">ម៉ឺនុយម្ហូប</span>
                 </button>
 
               </div>
             </div>
 
             {/* Other Services Mini Grid Headers */}
-            <div className="text-left space-y-3.5 pt-2">
+            <div className="text-left space-y-4 pt-3">
               <div className="flex justify-between items-center px-1">
-                <h3 className="text-sm font-black text-slate-200">សេវាផ្សេងៗ (Other Services)</h3>
+                <h3 className="text-base font-extrabold text-slate-800 tracking-wide">សេវាផ្សេងៗ (Other Services)</h3>
                 <ChevronRight className="w-5 h-5 text-slate-400" />
               </div>
 
               <div className="grid grid-cols-3 gap-4">
                 
-                <button onClick={() => setMobilePopup('gallery')} className="flex flex-col items-center space-y-1.5 group select-none">
-                  <div className="w-12 h-12 rounded-full bg-[#152e4d] border border-slate-700/30 flex items-center justify-center shadow-md active:bg-[#1a385a] transition">
-                    <Camera className="w-5 h-5 text-[#3ecf8e]" />
+                <button onClick={() => setMobilePopup('gallery')} className="flex flex-col items-center space-y-2 group select-none cursor-pointer">
+                  <div className="w-13 h-13 rounded-full bg-white border border-slate-200/80 flex items-center justify-center shadow-md active:bg-rose-50/40 transition">
+                    <Camera className="w-6 h-6 text-emerald-500" />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-300">វិចិត្រសាល</span>
+                  <span className="text-xs font-black text-slate-700">វិចិត្រសាល</span>
                 </button>
 
-                <button onClick={() => setMobilePopup('blessing')} className="flex flex-col items-center space-y-1.5 group select-none">
-                  <div className="w-12 h-12 rounded-full bg-[#152e4d] border border-slate-700/30 flex items-center justify-center shadow-md active:bg-[#1a385a] transition">
-                    <Send className="w-5 h-5 text-teal-400" />
+                <button onClick={() => setMobilePopup('blessing')} className="flex flex-col items-center space-y-2 group select-none cursor-pointer">
+                  <div className="w-13 h-13 rounded-full bg-white border border-slate-200/80 flex items-center justify-center shadow-md active:bg-rose-50/40 transition">
+                    <Send className="w-6 h-6 text-teal-500" />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-300">ផ្ញើពរជ័យ</span>
+                  <span className="text-xs font-black text-slate-700">ផ្ញើពរជ័យ</span>
                 </button>
 
-                <a href={`tel:${activeWedding?.host_username || '012345678'}`} className="flex flex-col items-center space-y-1.5 group select-none">
-                  <div className="w-12 h-12 rounded-full bg-[#152e4d] border border-slate-700/30 flex items-center justify-center shadow-md active:bg-[#1a385a] transition">
-                    <UserCheck className="w-5 h-5 text-[#f2c144]" />
+                <a href={`tel:${activeWedding?.host_username || '012345678'}`} className="flex flex-col items-center space-y-2 group select-none cursor-pointer">
+                  <div className="w-13 h-13 rounded-full bg-white border border-slate-200/80 flex items-center justify-center shadow-md active:bg-rose-50/40 transition">
+                    <UserCheck className="w-6 h-6 text-amber-600" />
                   </div>
-                  <span className="text-[10px] font-bold text-slate-300">ទាក់ទងការ</span>
+                  <span className="text-xs font-black text-slate-700">ទាក់ទងការ</span>
                 </a>
 
               </div>
@@ -3325,18 +3325,18 @@ export default function App() {
         {/* REGISTER GUEST OVERLAY */}
         {mobileActiveView === 'register' && (
           <div className="flex-1 overflow-y-auto p-4.5 animate-fade-in text-slate-900 bg-slate-50">
-            <div className="flex items-center justify-between border-b border-rose-100 pb-3 mb-4 shrink-0">
+            <div className="flex items-center justify-between border-b border-rose-100 pb-3.5 mb-5 shrink-0">
               <button 
                 onClick={() => {
                   setMobileActiveView('home');
                   setRegistrationSuccess(false);
                 }}
-                className="flex items-center space-x-1.5 text-rose-600 font-bold text-xs"
+                className="flex items-center space-x-1.5 text-rose-600 font-extrabold text-xs cursor-pointer"
               >
                 <ChevronLeft className="w-5 h-5" />
                 <span>ត្រឡប់ទៅវិញ</span>
               </button>
-              <h2 className="text-sm font-black text-slate-800">ស្វាគមន៍ការចុះឈ្មោះភ្ញៀវ</h2>
+              <h2 className="text-lg font-extrabold text-slate-800 tracking-tight">ស្វាគមន៍ការចុះឈ្មោះភ្ញៀវ</h2>
               <div className="w-9 h-9"></div>
             </div>
 
@@ -3648,15 +3648,15 @@ export default function App() {
         {/* GUEST LISTING OVERLAY */}
         {mobileActiveView === 'list' && (
           <div className="flex-1 overflow-y-auto p-4 animate-fade-in text-slate-900 bg-slate-50">
-            <div className="flex items-center justify-between border-b border-rose-100 pb-3 mb-4 shrink-0">
+            <div className="flex items-center justify-between border-b border-rose-100 pb-3.5 mb-5 shrink-0">
               <button 
                 onClick={() => setMobileActiveView('home')}
-                className="flex items-center space-x-1.5 text-rose-600 font-bold text-xs"
+                className="flex items-center space-x-1.5 text-rose-600 font-extrabold text-xs cursor-pointer"
               >
                 <ChevronLeft className="w-5 h-5" />
                 <span>ត្រឡប់ទៅវិញ</span>
               </button>
-              <h2 className="text-sm font-black text-slate-800">បញ្ជីរាយនាមភ្ញៀវចូលរួម</h2>
+              <h2 className="text-lg font-extrabold text-slate-800 tracking-tight">បញ្ជីរាយនាមភ្ញៀវចូលរួម</h2>
               <div className="w-9 h-9"></div>
             </div>
 
@@ -3769,15 +3769,15 @@ export default function App() {
         {/* BRANDS / EVENT ANALYTICS MODAL */}
         {mobileActiveView === 'bonds' && (
           <div className="flex-1 overflow-y-auto p-5 animate-fade-in text-slate-900 bg-slate-50">
-            <div className="flex items-center justify-between border-b border-rose-100 pb-3 mb-5 shrink-0">
+            <div className="flex items-center justify-between border-b border-rose-100 pb-3.5 mb-5 shrink-0">
               <button 
                 onClick={() => setMobileActiveView('home')}
-                className="flex items-center space-x-1.5 text-rose-600 font-bold text-xs"
+                className="flex items-center space-x-1.5 text-rose-600 font-extrabold text-xs cursor-pointer"
               >
                 <ChevronLeft className="w-5 h-5" />
                 <span>ត្រឡប់ទៅវិញ</span>
               </button>
-              <h2 className="text-sm font-black text-slate-800">ស្ថិតិ និងប្រតិបត្តិការ</h2>
+              <h2 className="text-lg font-extrabold text-slate-800 tracking-tight">ស្ថិតិ និងប្រតិបត្តិការ</h2>
               <div className="w-9 h-9"></div>
             </div>
 
@@ -3821,15 +3821,15 @@ export default function App() {
         {/* DIGITAL GIFT / KHQR CODES PRESENTOR */}
         {mobileActiveView === 'khqr' && (
           <div className="flex-1 overflow-y-auto p-5 animate-fade-in text-slate-900 bg-slate-50">
-            <div className="flex items-center justify-between border-b border-rose-100 pb-3 mb-5 shrink-0">
+            <div className="flex items-center justify-between border-b border-rose-100 pb-3.5 mb-5 shrink-0">
               <button 
                 onClick={() => setMobileActiveView('home')}
-                className="flex items-center space-x-1.5 text-rose-600 font-bold text-xs"
+                className="flex items-center space-x-1.5 text-rose-600 font-extrabold text-xs cursor-pointer"
               >
                 <ChevronLeft className="w-5 h-5" />
                 <span>ត្រឡប់ទៅវិញ</span>
               </button>
-              <h2 className="text-sm font-black text-slate-800">វេលុយចងដៃតាម KHQR</h2>
+              <h2 className="text-lg font-extrabold text-slate-800 tracking-tight">វេលុយចងដៃតាម KHQR</h2>
               <div className="w-9 h-9"></div>
             </div>
 
@@ -3879,15 +3879,15 @@ export default function App() {
         {/* TELEGRAM CONFIG OVERLAY */}
         {mobileActiveView === 'telegram' && (
           <div className="flex-1 overflow-y-auto p-5 animate-fade-in text-slate-900 bg-slate-50 text-left">
-            <div className="flex items-center justify-between border-b border-rose-100 pb-3 mb-5 shrink-0">
+            <div className="flex items-center justify-between border-b border-rose-100 pb-3.5 mb-5 shrink-0">
               <button 
                 onClick={() => setMobileActiveView('home')}
-                className="flex items-center space-x-1.5 text-rose-600 font-bold text-xs"
+                className="flex items-center space-x-1.5 text-rose-600 font-extrabold text-xs cursor-pointer"
               >
                 <ChevronLeft className="w-5 h-5" />
                 <span>ត្រឡប់ទៅវិញ</span>
               </button>
-              <h2 className="text-sm font-black text-slate-800">ប្រព័ន្ធ Telegram Notify</h2>
+              <h2 className="text-lg font-extrabold text-slate-800 tracking-tight">ប្រព័ន្ធ Telegram Notify</h2>
               <div className="w-9 h-9"></div>
             </div>
 
@@ -3935,15 +3935,15 @@ export default function App() {
         {/* DATABASE SETTINGS / OVERLAY */}
         {mobileActiveView === 'supabase_settings' && (
           <div className="flex-1 overflow-y-auto p-5 animate-fade-in text-slate-900 bg-slate-50 text-left">
-            <div className="flex items-center justify-between border-b border-rose-100 pb-3 mb-5 shrink-0">
+            <div className="flex items-center justify-between border-b border-rose-100 pb-3.5 mb-5 shrink-0">
               <button 
                 onClick={() => setMobileActiveView('home')}
-                className="flex items-center space-x-1.5 text-rose-600 font-bold text-xs"
+                className="flex items-center space-x-1.5 text-rose-600 font-extrabold text-xs cursor-pointer"
               >
                 <ChevronLeft className="w-5 h-5" />
                 <span>ត្រឡប់ទៅវិញ</span>
               </button>
-              <h2 className="text-sm font-black text-slate-800">ការកំណត់ប្រព័ន្ធទិន្នន័យ (SaaS)</h2>
+              <h2 className="text-lg font-extrabold text-slate-800 tracking-tight">ការកំណត់ប្រព័ន្ធទិន្នន័យ (SaaS)</h2>
               <div className="w-9 h-9"></div>
             </div>
 
@@ -4006,15 +4006,15 @@ export default function App() {
 
         {/* MOBILE AUTH SCREEN */}
         {mobileActiveView === 'mobile_auth' && (
-          <div className="flex-1 overflow-y-auto p-5 animate-fade-in text-slate-100 flex flex-col justify-center max-w-sm mx-auto w-full">
+          <div className="flex-1 overflow-y-auto p-5 animate-fade-in text-slate-800 flex flex-col justify-center max-w-sm mx-auto w-full">
             <div className="text-center mb-8">
-              <div className="w-14 h-14 bg-rose-500/10 text-rose-400 rounded-full flex items-center justify-center mx-auto mb-3 border border-rose-500/20">
+              <div className="w-14 h-14 bg-rose-50 text-rose-500 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-100 shadow-sm">
                 <Database className="w-7 h-7" />
               </div>
-              <h2 className="text-lg font-black text-white">
+              <h2 className="text-xl font-black text-slate-800">
                 {isLoginMode ? 'ចូលប្រើប្រាស់ប្រព័ន្ធ (SaaS)' : 'ចុះឈ្មោះគណនីថ្មី (SaaS)'}
               </h2>
-              <p className="text-[11px] text-slate-300 mt-1.5 max-w-xs mx-auto leading-relaxed">
+              <p className="text-xs text-slate-500 mt-2 max-w-xs mx-auto leading-relaxed font-medium">
                 ម្ចាស់កម្មវិធីត្រូវតែចុះឈ្មោះ ឬចូលគណនីជាមុនសិន ដើម្បីប្រើប្រាស់មុខងារគ្រប់គ្រង។
               </p>
             </div>
@@ -4022,43 +4022,43 @@ export default function App() {
             <form onSubmit={handleSaaSAuth} className="space-y-4 text-xs font-sans">
               {!isLoginMode && (
                 <div>
-                  <label className="block text-slate-200 mt-1 font-bold mb-1.5 text-left">គណនី (Username) *</label>
+                  <label className="block text-slate-700 mt-1 font-extrabold mb-1.5 text-left text-xs">គណនី (Username) *</label>
                   <input
                     type="text"
                     required={!isLoginMode}
                     value={authUsername}
                     onChange={(e) => setAuthUsername(e.target.value)}
-                    className="w-full bg-[#112d4d] border border-slate-700/60 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500 text-xs"
+                    className="w-full bg-white border border-slate-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 rounded-xl px-4 py-3 text-slate-800 focus:outline-none text-xs shadow-sm transition"
                     placeholder="Username"
                   />
                 </div>
               )}
               <div>
-                <label className="block text-slate-200 mt-1 font-bold mb-1.5 text-left">អ៊ីមែល ឬ លេខទូរស័ព្ទ (Email or Phone Number) *</label>
+                <label className="block text-slate-700 mt-1 font-extrabold mb-1.5 text-left text-xs">អ៊ីមែល ឬ លេខទូរស័ព្ទ (Email or Phone Number) *</label>
                 <input
                   type="text"
                   required
                   value={authEmail}
                   onChange={(e) => setAuthEmail(e.target.value)}
-                  className="w-full bg-[#112d4d] border border-slate-700/60 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500 text-xs"
+                  className="w-full bg-white border border-slate-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 rounded-xl px-4 py-3 text-slate-800 focus:outline-none text-xs shadow-sm transition"
                   placeholder="name@example.com ឬ 012345678"
                 />
               </div>
               <div>
-                <label className="block text-slate-200 mt-1 font-bold mb-1.5 text-left">ពាក្យសម្ងាត់ (Password) *</label>
+                <label className="block text-slate-700 mt-1 font-extrabold mb-1.5 text-left text-xs">ពាក្យសម្ងាត់ (Password) *</label>
                 <div className="relative">
                   <input
                     type={showPassword ? 'text' : 'password'}
                     required
                     value={authPassword}
                     onChange={(e) => setAuthPassword(e.target.value)}
-                    className="w-full bg-[#112d4d] border border-slate-700/60 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-rose-500 pr-12 text-xs"
+                    className="w-full bg-white border border-slate-300 focus:ring-2 focus:ring-rose-500 focus:border-rose-500 rounded-xl px-4 py-3 text-slate-800 focus:outline-none pr-12 text-xs shadow-sm transition"
                     placeholder="••••••••"
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300 focus:outline-none cursor-pointer text-xs"
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 focus:outline-none cursor-pointer"
                   >
                     {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -4068,7 +4068,7 @@ export default function App() {
               <button
                 type="submit"
                 disabled={authProcessing}
-                className="w-full bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-bold rounded-xl py-3 mt-4 transition duration-155 shadow-md shadow-rose-600/20 disabled:opacity-50"
+                className="w-full bg-rose-600 hover:bg-rose-700 active:bg-rose-800 text-white font-black rounded-xl py-3 mt-4 transition duration-155 shadow-md shadow-rose-600/20 disabled:opacity-50 text-xs cursor-pointer"
               >
                 {authProcessing ? 'កំពុងដំណើរការ...' : isLoginMode ? 'ចូលប្រព័ន្ធ (Login)' : 'បង្កើតគណនី (Sign Up)'}
               </button>
@@ -4077,10 +4077,10 @@ export default function App() {
                 <div className="mt-4">
                   <div className="relative">
                     <div className="absolute inset-0 flex items-center">
-                      <div className="w-full border-t border-slate-700/60"></div>
+                      <div className="w-full border-t border-slate-200"></div>
                     </div>
-                    <div className="relative flex justify-center text-[10px]">
-                      <span className="px-2 bg-[#0d213a] text-slate-400">Or</span>
+                    <div className="relative flex justify-center text-[10px] uppercase font-bold text-slate-400">
+                      <span className="px-2 bg-gradient-to-b from-[#fdfcfe] via-[#faf9f6]/95 to-[#f4f3ed]/90">Or</span>
                     </div>
                   </div>
 
@@ -4088,8 +4088,9 @@ export default function App() {
                     type="button"
                     onClick={handleGoogleAuth}
                     disabled={authProcessing}
-                    className="w-full mt-4 flex items-center justify-center gap-2 bg-[#112d4d] border border-slate-700/60 text-slate-200 hover:bg-slate-800 font-bold rounded-xl py-3 transition disabled:opacity-50 text-xs"
+                    className="w-full mt-4 flex items-center justify-center gap-2 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 font-black rounded-xl py-3 transition disabled:opacity-50 text-xs shadow-xs cursor-pointer"
                   >
+                    <svg className="w-4 h-4 mr-1" viewBox="0 0 24 24"><path fill="#EA4335" d="M12.24 10.285V14.4h6.887c-.275 1.564-1.8 4.594-6.887 4.594-4.39 0-7.967-3.61-7.967-8.05s3.577-8.05 7.967-8.05c2.5 0 4.17 1.05 5.13 1.97l3.24-3.13C18.52 1.6 15.61 0 12.24 0c-6.63 0-12 5.37-12 12s5.37 12 12 12c6.93 0 11.53-4.87 11.53-11.75 0-.79-.08-1.4-.19-1.965H12.24z"/></svg>
                     ភ្ជាប់ជាមួយ Gmail (Google)
                   </button>
                 </div>
@@ -4100,7 +4101,7 @@ export default function App() {
               <button
                 type="button"
                 onClick={handleAuthModeSwitch}
-                className="text-xs text-rose-400 font-bold hover:underline"
+                className="text-xs text-rose-600 font-extrabold hover:underline cursor-pointer"
               >
                 {isLoginMode ? 'មិនទាន់មានគណនី? ចុះឈ្មោះឥឡូវនេះ' : 'មានគណនីរួចហើយ? ចូលប្រព័ន្ធ'}
               </button>
@@ -4109,7 +4110,7 @@ export default function App() {
             {!(connectionMode === 'supabase' && !saasSession) && (
               <button
                 onClick={() => setMobileActiveView('home')}
-                className="mt-6 text-xs text-slate-400 hover:text-white"
+                className="mt-6 text-xs text-slate-500 font-bold hover:text-rose-600 transition cursor-pointer"
               >
                 ត្រលប់ទៅទំព័រដើមវិញ
               </button>
@@ -4119,7 +4120,7 @@ export default function App() {
 
         {mobileActiveView === 'pricing' && (
           <div className="flex-1 overflow-y-auto p-5 animate-fade-in text-slate-900 bg-slate-50 text-left flex flex-col pb-12">
-            <div className="flex items-center justify-between border-b border-slate-200/60 pb-3 mb-5 shrink-0">
+            <div className="flex items-center justify-between border-b border-slate-200/60 pb-3.5 mb-5 shrink-0">
               <button 
                 onClick={() => {
                   if (isCheckingOutPremium) {
@@ -4128,12 +4129,12 @@ export default function App() {
                     setMobileActiveView('home');
                   }
                 }}
-                className="flex items-center space-x-1.5 text-rose-600 font-bold text-xs cursor-pointer"
+                className="flex items-center space-x-1.5 text-rose-600 font-extrabold text-xs cursor-pointer"
               >
                 <ChevronLeft className="w-5 h-5" />
                 <span>{isCheckingOutPremium ? 'ត្រឡប់ទៅកញ្ចប់តម្លៃ' : 'ត្រឡប់ទៅវិញ'}</span>
               </button>
-              <h2 className="text-sm font-black text-slate-800">
+              <h2 className="text-lg font-extrabold text-slate-800 tracking-tight">
                 {currentActiveSub?.status === 'pending' 
                   ? 'រង់ចាំការពិនិត្យ' 
                   : isCheckingOutPremium 
@@ -4762,15 +4763,15 @@ export default function App() {
         
         {/* 1. Modal Invitation details */}
         {mobilePopup === 'invite' && (
-          <div className="fixed inset-0 z-50 bg-[#0d213a]/90 backdrop-blur-sm p-5 flex items-center justify-center animate-fade-in text-slate-800">
-            <div className="bg-white rounded-3xl border border-slate-100 p-6 max-w-xs w-full shadow-2xl relative">
-              <button onClick={() => setMobilePopup(null)} className="absolute top-4 right-4 bg-slate-100 rounded-full w-7 h-7 text-sm font-bold text-slate-500">✕</button>
-              <Heart className="w-10 h-10 text-rose-500 fill-rose-500 mx-auto mb-3 animate-pulse" />
-              <h3 className="text-base font-black mb-2 text-rose-600">សេចក្តីគោរពសេចក្តីអញ្ជើញ</h3>
-              <p className="text-[11px] text-slate-600 leading-relaxed font-semibold">
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md p-5 flex items-center justify-center animate-fade-in text-slate-800">
+            <div className="bg-white rounded-3xl border border-slate-100 p-7 max-w-xs w-full shadow-2xl relative">
+              <button onClick={() => setMobilePopup(null)} className="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 transition rounded-full w-8 h-8 text-sm font-bold text-slate-500 cursor-pointer">✕</button>
+              <Heart className="w-12 h-12 text-rose-500 fill-rose-500 mx-auto mb-4 animate-pulse" />
+              <h3 className="text-lg font-black mb-2 text-rose-600">សេចក្តីគោរពសេចក្តីអញ្ជើញ</h3>
+              <p className="text-xs text-slate-600 leading-relaxed font-bold">
                 សូមគោរពអញ្ជើញ ឯកឧត្តម លោកជំទាវ លោក លោកស្រី និងលោកជំទាវអ្នកនាងកញ្ញាចូលរួមជាអធិបតីភាពក្នុង កម្មវិធីមហាសង្ក្រាន្តការមង្គល។
               </p>
-              <div className="border-t border-slate-100 my-4 pt-3 text-[10px] text-slate-500 space-y-1">
+              <div className="border-t border-slate-100 my-4 pt-4 text-xs text-slate-500 space-y-2 text-left">
                 <p>📍 <b>ទីតាំងស្វាគមន៍៖</b> សាលមហោស្រពទាញជ័យ កោះពេជ្រ</p>
                 <p>📅 <b>កាលបរិច្ឆេទកម្មវិធី៖</b> ថ្ងៃអាទិត្យ ទី១២ ខែមិថុនា ២០២៦</p>
               </div>
@@ -4780,23 +4781,23 @@ export default function App() {
 
         {/* 2. Modal Bride Groom status */}
         {mobilePopup === 'bridegroom' && (
-          <div className="fixed inset-0 z-50 bg-[#0d213a]/90 backdrop-blur-sm p-5 flex items-center justify-center animate-fade-in text-slate-800">
-            <div className="bg-white rounded-3xl border border-slate-100 p-6 max-w-xs w-full shadow-2xl relative">
-              <button onClick={() => setMobilePopup(null)} className="absolute top-4 right-4 bg-slate-100 rounded-full w-7 h-7 text-sm font-bold text-slate-500">✕</button>
-              <div className="w-20 h-20 bg-rose-100 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-200">
-                <Heart className="w-10 h-10 text-rose-500" />
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md p-5 flex items-center justify-center animate-fade-in text-slate-800">
+            <div className="bg-white rounded-3xl border border-slate-100 p-7 max-w-xs w-full shadow-2xl relative">
+              <button onClick={() => setMobilePopup(null)} className="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 transition rounded-full w-8 h-8 text-sm font-bold text-slate-500 cursor-pointer">✕</button>
+              <div className="w-20 h-20 bg-rose-50 rounded-full flex items-center justify-center mx-auto mb-4 border border-rose-100">
+                <Heart className="w-11 h-11 text-rose-500 fill-rose-100" />
               </div>
-              <h3 className="text-base font-black mb-1.5 text-center text-slate-800 leading-none">ម្ចាស់គូស្រករមង្គលការ</h3>
-              <p className="text-xs text-slate-500 font-bold text-center mb-4 italic">The Bride & Groom</p>
+              <h3 className="text-lg font-black mb-1.5 text-center text-slate-850 leading-none">ម្ចាស់គូស្រករមង្គលការ</h3>
+              <p className="text-xs text-slate-400 font-bold text-center mb-5 italic font-mono uppercase tracking-wider">The Bride & Groom</p>
 
-              <div className="space-y-2 text-center text-xs text-slate-700">
-                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                  <span className="text-[9px] uppercase tracking-wider text-slate-400 block font-semibold">កូនកំលោះ (Groom)</span>
-                  <span className="font-bold font-sans">សុខ សម្បត្តិ</span>
+              <div className="space-y-3 text-center text-xs text-slate-700">
+                <div className="bg-[#fffbf5] p-3.5 rounded-2xl border border-amber-155/40 shadow-xs">
+                  <span className="text-[10px] uppercase tracking-wider text-amber-700 block font-black">កូនកំលោះ (Groom)</span>
+                  <span className="font-extrabold font-sans text-sm text-slate-800 mt-1 block">សុខ សម្បត្តិ</span>
                 </div>
-                <div className="bg-slate-50 p-2.5 rounded-xl border border-slate-100">
-                  <span className="text-[9px] uppercase tracking-wider text-slate-400 block font-semibold">កូនក្រមុំ (Bride)</span>
-                  <span className="font-bold font-sans">អ៊ន សុភី</span>
+                <div className="bg-[#fff9fc] p-3.5 rounded-2xl border border-rose-155/40 shadow-xs">
+                  <span className="text-[10px] uppercase tracking-wider text-rose-700 block font-black">កូនក្រមុំ (Bride)</span>
+                  <span className="font-extrabold font-sans text-sm text-slate-850 mt-1 block">អ៊ន សុភី</span>
                 </div>
               </div>
             </div>
@@ -4805,11 +4806,11 @@ export default function App() {
 
         {/* 3. Traditional Food Course Menu */}
         {mobilePopup === 'food' && (
-          <div className="fixed inset-0 z-50 bg-[#0d213a]/90 backdrop-blur-sm p-5 flex items-center justify-center animate-fade-in text-slate-900">
-            <div className="bg-white rounded-3xl border border-slate-100 p-5 max-w-xs w-full max-h-[70vh] flex flex-col shadow-2xl relative text-left">
-              <button onClick={() => setMobilePopup(null)} className="absolute top-4 right-4 bg-slate-100 rounded-full w-7 h-7 text-xs font-bold text-slate-500 flex items-center justify-center">✕</button>
-              <h3 className="text-sm font-black mb-3 border-b border-rose-100 pb-2.5 text-rose-600 font-sans tracking-wide">🍽️ ម៉ឺនុយម្ហូបមង្គលការ</h3>
-              <div className="overflow-y-auto flex-1 space-y-2.5 pr-1 text-[11px] leading-relaxed text-slate-700">
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md p-5 flex items-center justify-center animate-fade-in text-slate-900">
+            <div className="bg-white rounded-3xl border border-slate-100 p-6 max-w-xs w-full max-h-[75vh] flex flex-col shadow-2xl relative text-left">
+              <button onClick={() => setMobilePopup(null)} className="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 transition rounded-full w-8 h-8 text-xs font-bold text-slate-500 flex items-center justify-center cursor-pointer">✕</button>
+              <h3 className="text-base font-black mb-4 border-b border-rose-100 pb-3 text-rose-600 font-sans tracking-wide">🍽️ ម៉ឺនុយម្ហូបមង្គលការ</h3>
+              <div className="overflow-y-auto flex-1 space-y-3 pr-1 text-xs leading-relaxed text-slate-700 font-bold">
                 <p><b>១. អាហារសម្រន់៖</b> កូនបង្កងចំហុយ, គ្រំថ្មទឹកត្រីកោះកុង</p>
                 <p><b>២. ស៊ុបកំដៅ៖</b> ស៊ុបប្រហិតត្រីក្តៅរសជាតិបែបប្រពៃណី</p>
                 <p><b>៣. ម្ហូបចម្បង៖</b> ទាចំហុយទឹកឃ្មុំរសជាតិសំបូរបែប</p>
@@ -4823,15 +4824,15 @@ export default function App() {
 
         {/* 4. Photo Gallery Thumbnail popups */}
         {mobilePopup === 'gallery' && (
-          <div className="fixed inset-0 z-50 bg-[#0d213a]/95 backdrop-blur-sm p-4 flex items-center justify-center animate-fade-in text-slate-800">
-            <div className="bg-white rounded-3xl border border-slate-100 p-5 max-w-xs w-full shadow-2xl relative">
-              <button onClick={() => setMobilePopup(null)} className="absolute top-4 right-4 bg-slate-100 rounded-full w-7 h-7 text-sm font-bold text-slate-500">✕</button>
-              <h3 className="text-sm font-black mb-3 text-left">📸 រូបភាពវិចិត្រសាល</h3>
-              <div className="grid grid-cols-2 gap-2.5">
-                <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=200&auto=format&fit=crop" className="rounded-lg object-cover w-full h-20" alt="Wedding 1" />
-                <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=200&auto=format&fit=crop" className="rounded-lg object-cover w-full h-20" alt="Wedding 2" />
-                <img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=200&auto=format&fit=crop" className="rounded-lg object-cover w-full h-20" alt="Wedding 3" />
-                <img src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=200&auto=format&fit=crop" className="rounded-lg object-cover w-full h-20" alt="Wedding 4" />
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md p-4 flex items-center justify-center animate-fade-in text-slate-800">
+            <div className="bg-white rounded-3xl border border-slate-100 p-6 max-w-xs w-full shadow-2xl relative">
+              <button onClick={() => setMobilePopup(null)} className="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 transition rounded-full w-8 h-8 text-sm font-bold text-slate-500 cursor-pointer">✕</button>
+              <h3 className="text-base font-black mb-4 text-left">📸 រូបភាពវិចិត្រសាល</h3>
+              <div className="grid grid-cols-2 gap-3">
+                <img src="https://images.unsplash.com/photo-1519741497674-611481863552?w=200&auto=format&fit=crop" className="rounded-xl object-cover w-full h-22 transition hover:scale-105" alt="Wedding 1" />
+                <img src="https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=200&auto=format&fit=crop" className="rounded-xl object-cover w-full h-22 transition hover:scale-105" alt="Wedding 2" />
+                <img src="https://images.unsplash.com/photo-1522673607200-164d1b6ce486?w=200&auto=format&fit=crop" className="rounded-xl object-cover w-full h-22 transition hover:scale-105" alt="Wedding 3" />
+                <img src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=200&auto=format&fit=crop" className="rounded-xl object-cover w-full h-22 transition hover:scale-105" alt="Wedding 4" />
               </div>
             </div>
           </div>
@@ -4839,25 +4840,25 @@ export default function App() {
 
         {/* 5. User Direct wishes entry form */}
         {mobilePopup === 'blessing' && (
-          <div className="fixed inset-0 z-50 bg-[#0d213a]/90 backdrop-blur-sm p-5 flex items-center justify-center animate-fade-in text-slate-800">
-            <div className="bg-white rounded-3xl border border-slate-100 p-5 max-w-xs w-full shadow-2xl relative text-left">
-              <button onClick={() => setMobilePopup(null)} className="absolute top-4 right-4 bg-slate-100 rounded-full w-7 h-7 text-sm font-bold text-slate-500 flex items-center justify-center">✕</button>
-              <h3 className="text-sm font-black mb-3.5 text-rose-600 border-b border-rose-100 pb-2 flex items-center gap-1.5"><Heart className="w-4 h-4 fill-rose-500 text-rose-500" /> ផ្ញើសារពរជ័យមង្គល</h3>
+          <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-md p-5 flex items-center justify-center animate-fade-in text-slate-800">
+            <div className="bg-white rounded-3xl border border-slate-100 p-6 max-w-xs w-full shadow-2xl relative text-left">
+              <button onClick={() => setMobilePopup(null)} className="absolute top-4 right-4 bg-slate-100 hover:bg-slate-200 transition rounded-full w-8 h-8 text-sm font-bold text-slate-500 flex items-center justify-center cursor-pointer">✕</button>
+              <h3 className="text-base font-black mb-4 text-rose-600 border-b border-rose-100 pb-3 flex items-center gap-2"><Heart className="w-4.5 h-4.5 fill-rose-500 text-rose-505" /> ផ្ញើសារពរជ័យមង្គល</h3>
               
-              <form onSubmit={handleMobileSendBlessing} className="space-y-3.5 text-xs">
+              <form onSubmit={handleMobileSendBlessing} className="space-y-4 text-xs font-sans">
                 <div>
-                  <label className="block text-slate-600 font-bold mb-1">ឈ្មោះរបស់អ្នក (Your Name) *</label>
+                  <label className="block text-slate-700 font-extrabold mb-1.5">ឈ្មោះរបស់អ្នក (Your Name) *</label>
                   <input 
                     type="text"
                     required
                     value={customBlessingSender}
                     onChange={(e) => setCustomBlessingSender(e.target.value)}
                     placeholder="ឧ. ម៉ៅ វុឌ្ឍី"
-                    className="w-full bg-slate-50 border border-slate-200 rounded-lg p-2.5"
+                    className="w-full bg-slate-50 border border-slate-250 rounded-xl p-3 focus:outline-none focus:ring-2 focus:ring-rose-500 font-bold"
                   />
                 </div>
                 <div>
-                  <label className="block text-slate-600 font-bold mb-1">សេចក្តីជូនពរគូស្រករ (Your Blessing) *</label>
+                  <label className="block text-slate-700 font-extrabold mb-1.5 font-sans">សេចក្តីជូនពរគូស្រករ (Your Blessing) *</label>
                   <textarea 
                     rows={3}
                     required
